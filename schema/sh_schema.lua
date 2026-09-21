@@ -1,4 +1,3 @@
-
 Schema.name = "HL2 RP"
 Schema.author = "nebulous.cloud"
 Schema.description = "A schema based on Half-Life 2."
@@ -28,22 +27,19 @@ ix.anim.SetModelClass("models/eliteshockcp.mdl", "metrocop")
 ix.anim.SetModelClass("models/leet_police2.mdl", "metrocop")
 ix.anim.SetModelClass("models/sect_police2.mdl", "metrocop")
 ix.anim.SetModelClass("models/policetrench.mdl", "metrocop")
-
--- Stock Combine soldier models already default to "overwatch" in Helix core;
--- listed here anyway for clarity.
 ix.anim.SetModelClass("models/combine_soldier.mdl", "overwatch")
-ix.anim.SetModelClass("models/combine_soldier_prisonguard.mdl", "overwatch")
+ix.anim.SetModelClass("models/combine_soldier_prisonguard.mdl","overwatch")
 ix.anim.SetModelClass("models/combine_super_soldier.mdl", "overwatch")
 
--- The HLVR Combine ports don't have the "idle_unarmed"/"walkunarmed_all"
--- named sequences that the stock "overwatch" anim class relies on for its
--- relaxed idle/walk poses (only Valve's original combine_soldier compile
--- has those) - that's what was causing the T-posing whenever the "relaxed"
--- pose was selected (weapon out but not aiming, keys out, etc). The
--- "alert"/aiming poses worked because those use real numbered activities
--- instead. This is a copy of "overwatch" with every "idle_unarmed" and
--- "walkunarmed_all" replaced by that category's numbered alert activity,
--- so it never touches the missing named sequences.
+-- The HLVR Combine port below doesn't have the "idle_unarmed"/
+-- "walkunarmed_all" named sequences that the stock "overwatch" anim class
+-- needs for its relaxed idle/walk poses (only Valve's original
+-- combine_soldier compile has those) - that's what causes T-posing
+-- whenever the relaxed pose is selected (weapon out but not aiming, keys
+-- out, etc), while alert/aiming poses work fine since those use real
+-- numbered activities instead. overwatch_hlvr is a copy of "overwatch"
+-- with every "idle_unarmed"/"walkunarmed_all" replaced by that category's
+-- numbered alert activity, so it never touches the missing sequences.
 ix.anim.overwatch_hlvr = {
 	normal = {
 		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY, ACT_IDLE_ANGRY},
@@ -97,10 +93,45 @@ ix.anim.overwatch_hlvr = {
 	glide = ACT_GLIDE
 }
 
-ix.anim.SetModelClass("models/jq/hlvr/characters/combine/combine_captain/combine_captain_hlvr_player.mdl", "overwatch_hlvr")
-ix.anim.SetModelClass("models/jq/hlvr/characters/combine/grunt/combine_grunt_hlvr_player.mdl", "overwatch_hlvr")
-ix.anim.SetModelClass("models/jq/hlvr/characters/combine/heavy/combine_heavy_hlvr_player.mdl", "overwatch_hlvr")
-ix.anim.SetModelClass("models/jq/hlvr/characters/combine/suppressor/combine_suppressor_hlvr_player.mdl", "overwatch_hlvr")
+ix.anim.SetModelClass("models/jq/hlvr/characters/combine/grunt/combine_grunt_hlvr_npc.mdl","overwatch_hlvr")
+ix.anim.SetModelClass("models/synapse/combine/combine_soldier_elite_h.mdl", "metrocop")
+ix.anim.SetModelClass("models/synapse/combine/combine_soldier_h.mdl", "metrocop")
+ix.anim.SetModelClass("models/synapse/combine/combine_supressor.mdl", "metrocop")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/female_01.mdl", "citizen_female")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/female_02.mdl", "citizen_female")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/female_03.mdl", "citizen_female")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/female_04.mdl", "citizen_female")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/female_05.mdl", "citizen_female")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/female_06.mdl", "citizen_female")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/male_01.mdl", "citizen_male")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/male_02.mdl", "citizen_male")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/male_03.mdl", "citizen_male")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/male_04.mdl", "citizen_male")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/male_05.mdl", "citizen_male")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/male_06.mdl", "citizen_male")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/male_07.mdl", "citizen_male")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/male_08.mdl", "citizen_male")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/male_09.mdl", "citizen_male")
+ix.anim.SetModelClass("models/willardnetworks/conscripts/male_10.mdl", "citizen_male")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/female_01.mdl.", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/female_02.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/female_03.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/female_04.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/female_05.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/female_06.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/male_01.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/male_02.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/male_03.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/male_04.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/male_05.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/male_06.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/male_07.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/male_08.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/male_09.mdl", "metrocop")
+ix.anim.SetModelClass("models/wn7new/metropolice_c24/male_10.mdl", "metrocop")
+
+
+
 
 function Schema:ZeroNumber(number, length)
 	local amount = math.max(0, length - string.len(number))
