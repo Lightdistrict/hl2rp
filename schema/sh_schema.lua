@@ -35,15 +35,72 @@ ix.anim.SetModelClass("models/combine_soldier.mdl", "overwatch")
 ix.anim.SetModelClass("models/combine_soldier_prisonguard.mdl", "overwatch")
 ix.anim.SetModelClass("models/combine_super_soldier.mdl", "overwatch")
 
--- The HLVR Combine ports are a different compile from Valve's originals and
--- don't have the "idle_unarmed"/"walkunarmed_all" named sequences that the
--- "overwatch" anim class needs, which is what was causing the T-posing.
--- "citizen_male" uses only numbered activities (ACT_IDLE, ACT_IDLE_SMG1,
--- etc.), which these playermodel compiles should actually have.
-ix.anim.SetModelClass("models/jq/hlvr/characters/combine/combine_captain/combine_captain_hlvr_player.mdl", "citizen_male")
-ix.anim.SetModelClass("models/jq/hlvr/characters/combine/grunt/combine_grunt_hlvr_player.mdl", "citizen_male")
-ix.anim.SetModelClass("models/jq/hlvr/characters/combine/heavy/combine_heavy_hlvr_player.mdl", "citizen_male")
-ix.anim.SetModelClass("models/jq/hlvr/characters/combine/suppressor/combine_suppressor_hlvr_player.mdl", "citizen_male")
+-- The HLVR Combine ports don't have the "idle_unarmed"/"walkunarmed_all"
+-- named sequences that the stock "overwatch" anim class relies on for its
+-- relaxed idle/walk poses (only Valve's original combine_soldier compile
+-- has those) - that's what was causing the T-posing whenever the "relaxed"
+-- pose was selected (weapon out but not aiming, keys out, etc). The
+-- "alert"/aiming poses worked because those use real numbered activities
+-- instead. This is a copy of "overwatch" with every "idle_unarmed" and
+-- "walkunarmed_all" replaced by that category's numbered alert activity,
+-- so it never touches the missing named sequences.
+ix.anim.overwatch_hlvr = {
+	normal = {
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY, ACT_IDLE_ANGRY},
+		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
+		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
+		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
+		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
+		[ACT_LAND] = {ACT_RESET, ACT_RESET}
+	},
+	pistol = {
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY_SMG1, ACT_IDLE_ANGRY_SMG1},
+		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
+		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
+		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
+		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
+		[ACT_LAND] = {ACT_RESET, ACT_RESET}
+	},
+	smg = {
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE_SMG1, ACT_IDLE_ANGRY_SMG1},
+		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
+		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_AIM_RIFLE},
+		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
+		[ACT_MP_RUN] = {ACT_RUN_RIFLE, ACT_RUN_AIM_RIFLE},
+		[ACT_LAND] = {ACT_RESET, ACT_RESET}
+	},
+	shotgun = {
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE_SMG1, ACT_IDLE_ANGRY_SHOTGUN},
+		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
+		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_AIM_SHOTGUN},
+		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
+		[ACT_MP_RUN] = {ACT_RUN_RIFLE, ACT_RUN_AIM_SHOTGUN},
+		[ACT_LAND] = {ACT_RESET, ACT_RESET}
+	},
+	grenade = {
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY, ACT_IDLE_ANGRY},
+		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
+		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
+		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
+		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
+		[ACT_LAND] = {ACT_RESET, ACT_RESET}
+	},
+	melee = {
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY, ACT_IDLE_ANGRY},
+		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
+		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
+		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
+		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
+		[ACT_LAND] = {ACT_RESET, ACT_RESET},
+		attack = ACT_MELEE_ATTACK_SWING_GESTURE
+	},
+	glide = ACT_GLIDE
+}
+
+ix.anim.SetModelClass("models/jq/hlvr/characters/combine/combine_captain/combine_captain_hlvr_player.mdl", "overwatch_hlvr")
+ix.anim.SetModelClass("models/jq/hlvr/characters/combine/grunt/combine_grunt_hlvr_player.mdl", "overwatch_hlvr")
+ix.anim.SetModelClass("models/jq/hlvr/characters/combine/heavy/combine_heavy_hlvr_player.mdl", "overwatch_hlvr")
+ix.anim.SetModelClass("models/jq/hlvr/characters/combine/suppressor/combine_suppressor_hlvr_player.mdl", "overwatch_hlvr")
 
 function Schema:ZeroNumber(number, length)
 	local amount = math.max(0, length - string.len(number))
