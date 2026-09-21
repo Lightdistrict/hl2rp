@@ -38,21 +38,22 @@ ix.anim.SetModelClass("models/combine_super_soldier.mdl", "overwatch")
 -- whenever the relaxed pose is selected (weapon out but not aiming, keys
 -- out, etc), while alert/aiming poses work fine since those use real
 -- numbered activities instead. overwatch_hlvr is a copy of "overwatch"
--- with every "idle_unarmed"/"walkunarmed_all" replaced by that category's
--- numbered alert activity, so it never touches the missing sequences.
+-- with "idle_unarmed"/"walkunarmed_all" replaced by ACT_IDLE/ACT_WALK
+-- (a genuine relaxed, hands-at-sides pose) for the relaxed state, while
+-- the alert/aiming state keeps the original numbered activity.
 ix.anim.overwatch_hlvr = {
 	normal = {
-		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY, ACT_IDLE_ANGRY},
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE, ACT_IDLE_ANGRY},
 		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
-		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
+		[ACT_MP_WALK] = {ACT_WALK, ACT_WALK_RIFLE},
 		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
 		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
 		[ACT_LAND] = {ACT_RESET, ACT_RESET}
 	},
 	pistol = {
-		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY_SMG1, ACT_IDLE_ANGRY_SMG1},
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE_PISTOL, ACT_IDLE_ANGRY_SMG1},
 		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
-		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
+		[ACT_MP_WALK] = {ACT_WALK, ACT_WALK_RIFLE},
 		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
 		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
 		[ACT_LAND] = {ACT_RESET, ACT_RESET}
@@ -74,17 +75,17 @@ ix.anim.overwatch_hlvr = {
 		[ACT_LAND] = {ACT_RESET, ACT_RESET}
 	},
 	grenade = {
-		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY, ACT_IDLE_ANGRY},
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE, ACT_IDLE_ANGRY},
 		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
-		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
+		[ACT_MP_WALK] = {ACT_WALK, ACT_WALK_RIFLE},
 		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
 		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
 		[ACT_LAND] = {ACT_RESET, ACT_RESET}
 	},
 	melee = {
-		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY, ACT_IDLE_ANGRY},
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE, ACT_IDLE_ANGRY},
 		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
-		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
+		[ACT_MP_WALK] = {ACT_WALK, ACT_WALK_RIFLE},
 		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
 		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
 		[ACT_LAND] = {ACT_RESET, ACT_RESET},
