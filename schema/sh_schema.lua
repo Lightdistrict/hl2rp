@@ -34,26 +34,28 @@ ix.anim.SetModelClass("models/combine_super_soldier.mdl", "overwatch")
 -- The HLVR Combine port below doesn't have the "idle_unarmed"/
 -- "walkunarmed_all" named sequences that the stock "overwatch" anim class
 -- needs for its relaxed idle/walk poses (only Valve's original
--- combine_soldier compile has those) - that's what causes T-posing
--- whenever the relaxed pose is selected (weapon out but not aiming, keys
--- out, etc), while alert/aiming poses work fine since those use real
--- numbered activities instead. overwatch_hlvr is a copy of "overwatch"
--- with "idle_unarmed"/"walkunarmed_all" replaced by ACT_IDLE/ACT_WALK
--- (a genuine relaxed, hands-at-sides pose) for the relaxed state, while
--- the alert/aiming state keeps the original numbered activity.
+-- combine_soldier compile has those). Confirmed in-game that this model
+-- ALSO doesn't have plain ACT_IDLE/ACT_WALK baked in either - it's an NPC
+-- compile built only for AI combat behavior, so it appears to only have
+-- the alert/combat-style poses at all (ACT_IDLE_ANGRY, ACT_WALK_RIFLE,
+-- ACT_RUN_AIM_RIFLE, etc). overwatch_hlvr uses those confirmed-working
+-- activities for both the relaxed and alert state, since there's no
+-- genuinely relaxed pose available on this particular model to fall back
+-- to - that's a limitation of the model's own compile, not something
+-- fixable from schema code.
 ix.anim.overwatch_hlvr = {
 	normal = {
-		[ACT_MP_STAND_IDLE] = {ACT_IDLE, ACT_IDLE_ANGRY},
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY, ACT_IDLE_ANGRY},
 		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
-		[ACT_MP_WALK] = {ACT_WALK, ACT_WALK_RIFLE},
+		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
 		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
 		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
 		[ACT_LAND] = {ACT_RESET, ACT_RESET}
 	},
 	pistol = {
-		[ACT_MP_STAND_IDLE] = {ACT_IDLE_PISTOL, ACT_IDLE_ANGRY_SMG1},
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY_SMG1, ACT_IDLE_ANGRY_SMG1},
 		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
-		[ACT_MP_WALK] = {ACT_WALK, ACT_WALK_RIFLE},
+		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
 		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
 		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
 		[ACT_LAND] = {ACT_RESET, ACT_RESET}
@@ -75,17 +77,17 @@ ix.anim.overwatch_hlvr = {
 		[ACT_LAND] = {ACT_RESET, ACT_RESET}
 	},
 	grenade = {
-		[ACT_MP_STAND_IDLE] = {ACT_IDLE, ACT_IDLE_ANGRY},
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY, ACT_IDLE_ANGRY},
 		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
-		[ACT_MP_WALK] = {ACT_WALK, ACT_WALK_RIFLE},
+		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
 		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
 		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
 		[ACT_LAND] = {ACT_RESET, ACT_RESET}
 	},
 	melee = {
-		[ACT_MP_STAND_IDLE] = {ACT_IDLE, ACT_IDLE_ANGRY},
+		[ACT_MP_STAND_IDLE] = {ACT_IDLE_ANGRY, ACT_IDLE_ANGRY},
 		[ACT_MP_CROUCH_IDLE] = {ACT_CROUCHIDLE, ACT_CROUCHIDLE},
-		[ACT_MP_WALK] = {ACT_WALK, ACT_WALK_RIFLE},
+		[ACT_MP_WALK] = {ACT_WALK_RIFLE, ACT_WALK_RIFLE},
 		[ACT_MP_CROUCHWALK] = {ACT_WALK_CROUCH_RIFLE, ACT_WALK_CROUCH_RIFLE},
 		[ACT_MP_RUN] = {ACT_RUN_AIM_RIFLE, ACT_RUN_AIM_RIFLE},
 		[ACT_LAND] = {ACT_RESET, ACT_RESET},
