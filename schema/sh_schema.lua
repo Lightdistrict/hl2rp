@@ -29,6 +29,22 @@ ix.anim.SetModelClass("models/leet_police2.mdl", "metrocop")
 ix.anim.SetModelClass("models/sect_police2.mdl", "metrocop")
 ix.anim.SetModelClass("models/policetrench.mdl", "metrocop")
 
+-- Stock Combine soldier models already default to "overwatch" in Helix core;
+-- listed here anyway for clarity.
+ix.anim.SetModelClass("models/combine_soldier.mdl", "overwatch")
+ix.anim.SetModelClass("models/combine_soldier_prisonguard.mdl", "overwatch")
+ix.anim.SetModelClass("models/combine_super_soldier.mdl", "overwatch")
+
+-- The HLVR Combine ports are a different compile from Valve's originals and
+-- don't have the "idle_unarmed"/"walkunarmed_all" named sequences that the
+-- "overwatch" anim class needs, which is what was causing the T-posing.
+-- "citizen_male" uses only numbered activities (ACT_IDLE, ACT_IDLE_SMG1,
+-- etc.), which these playermodel compiles should actually have.
+ix.anim.SetModelClass("models/jq/hlvr/characters/combine/combine_captain/combine_captain_hlvr_player.mdl", "citizen_male")
+ix.anim.SetModelClass("models/jq/hlvr/characters/combine/grunt/combine_grunt_hlvr_player.mdl", "citizen_male")
+ix.anim.SetModelClass("models/jq/hlvr/characters/combine/heavy/combine_heavy_hlvr_player.mdl", "citizen_male")
+ix.anim.SetModelClass("models/jq/hlvr/characters/combine/suppressor/combine_suppressor_hlvr_player.mdl", "citizen_male")
+
 function Schema:ZeroNumber(number, length)
 	local amount = math.max(0, length - string.len(number))
 	return string.rep("0", amount)..tostring(number)
