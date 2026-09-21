@@ -1,5 +1,0 @@
-"hl2rp"
-{
-	"base"			"helix"
-	"menusystem"	"0"
-}
