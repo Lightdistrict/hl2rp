@@ -34,12 +34,9 @@ SWEP.ViewModel = Model("models/weapons/c_arms_animations.mdl")
 SWEP.WorldModel = ""
 
 SWEP.UseHands = false
-SWEP.LowerAngles = Angle(0, 5, -14)
-SWEP.LowerAngles2 = Angle(0, 5, -22)
 
-SWEP.IsAlwaysLowered = true
-SWEP.FireWhenLowered = true
-SWEP.HoldType = "passive"
+SWEP.IsAlwaysRaised = true
+SWEP.HoldType = "normal"
 
 -- Overridden per item: how much health it restores, how far you can reach a
 -- target with it, and how long the action bar takes before it applies.
