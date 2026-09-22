@@ -110,7 +110,11 @@ function Schema:PlayerLoadedCharacter(client, character, oldCharacter)
 	-- Force the Conscript/MPF/OTA display name for this character. This runs before Helix's own
 	-- GM:PlayerLoadedCharacter assigns a fresh character's default class (Schema hooks run before
 	-- the core gamemode hook of the same name), so assign it ourselves first if it isn't valid yet.
-	if (!ix.class.list[character:GetClass()]) then
+	-- Also catches a leftover class from a PREVIOUS faction (e.g. a promotion that got interrupted
+	-- because the target faction had no isDefault class set) - not just a missing class entirely.
+	local currentClass = ix.class.list[character:GetClass()]
+
+	if (!currentClass or currentClass.faction != faction) then
 		for _, v in pairs(ix.class.list) do
 			if (v.faction == faction and v.isDefault) then
 				character:SetClass(v.index)
