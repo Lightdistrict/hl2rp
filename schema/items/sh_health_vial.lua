@@ -1,6 +1,6 @@
 
 ITEM.name = "Health Vial"
-ITEM.model = Model("models/healthvial.mdl")
+ITEM.model = Model("models/genesis/props/w_healthvial.mdl")
 ITEM.description = "A small vial with green liquid."
 ITEM.category = "Medical"
 ITEM.price = 40

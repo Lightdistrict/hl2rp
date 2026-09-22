@@ -1,6 +1,6 @@
 
 ITEM.name = "Health Kit"
-ITEM.model = Model("models/items/healthkit.mdl")
+ITEM.model = Model("models/genesis/props/w_healthkit.mdl")
 ITEM.description = "A white packet filled with medication."
 ITEM.category = "Medical"
 ITEM.price = 65
