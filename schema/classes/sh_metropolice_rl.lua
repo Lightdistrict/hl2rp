@@ -1,4 +1,4 @@
-CLASS.name = "Protection Shift Leader"
+CLASS.name = "Rank Leader"
 CLASS.faction = FACTION_MPF
 
 function CLASS:CanSwitchTo(client)
@@ -9,8 +9,8 @@ function CLASS:OnSet(client)
 	local character = client:GetCharacter()
 
 	if (character) then
-		character:SetModel("models/leet_police2.mdl")
+		character:SetModel("models/eliteghostcp.mdl")
 	end
 end
 
-CLASS_EMP = CLASS.index
+CLASS_RL = CLASS.index

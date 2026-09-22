@@ -5,4 +5,4 @@ function CLASS:CanSwitchTo(client)
 	return false
 end
 
-CLASS_MPU = CLASS.index
+CLASS_PTL = CLASS.index

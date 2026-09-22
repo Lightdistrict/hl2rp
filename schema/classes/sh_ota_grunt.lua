@@ -10,4 +10,4 @@ function CLASS:OnSet(client)
 	end
 end
 
-CLASS_OWS = CLASS.index
+CLASS_OTA_GRUNT = CLASS.index
