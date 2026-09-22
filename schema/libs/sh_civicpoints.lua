@@ -9,79 +9,89 @@
 
 	Point thresholds below are starting defaults, not tuned numbers - adjust
 	freely, they only live in this one table.
+
+	IMPORTANT: files under schema/libs/ are auto-included before
+	schema/factions/ and schema/classes/ even exist (Helix loads libs,
+	then factions, then classes, then the schema's own root files). So the
+	FACTION_*/CLASS_* globals below can only be touched lazily - inside a
+	function - never in a top-level table built when this file first
+	loads. That's why the tables are built by BuildCivicLadders(), called
+	from Schema:OnLoaded() once everything actually exists.
 ]]
 
-Schema.civicLadders = {
-	[FACTION_CONSCRIPT] = {
-		ranks = {
-			{class = CLASS_CONSCRIPT_PVT, points = 10},
-			{class = CLASS_CONSCRIPT_PFC, points = 25},
-			{class = CLASS_CONSCRIPT_CPL, points = 45},
-			{class = CLASS_CONSCRIPT_SGT, points = 70},
-			{class = CLASS_CONSCRIPT_SSGT, points = 100},
-			{class = CLASS_CONSCRIPT_MSGT, points = 135},
-			{class = CLASS_CONSCRIPT_LT, points = 175},
-			{class = CLASS_CONSCRIPT_CPT, points = 220},
-			{class = CLASS_CONSCRIPT_MAJ, points = 270},
-			{class = CLASS_CONSCRIPT_COL, points = 325}
+function Schema:BuildCivicLadders()
+	self.civicLadders = {
+		[FACTION_CONSCRIPT] = {
+			ranks = {
+				{class = CLASS_CONSCRIPT_PVT, points = 10},
+				{class = CLASS_CONSCRIPT_PFC, points = 25},
+				{class = CLASS_CONSCRIPT_CPL, points = 45},
+				{class = CLASS_CONSCRIPT_SGT, points = 70},
+				{class = CLASS_CONSCRIPT_SSGT, points = 100},
+				{class = CLASS_CONSCRIPT_MSGT, points = 135},
+				{class = CLASS_CONSCRIPT_LT, points = 175},
+				{class = CLASS_CONSCRIPT_CPT, points = 220},
+				{class = CLASS_CONSCRIPT_MAJ, points = 270},
+				{class = CLASS_CONSCRIPT_COL, points = 325}
+			},
+			nextFaction = FACTION_MPF,
+			nextFactionPoints = 400
 		},
-		nextFaction = FACTION_MPF,
-		nextFactionPoints = 400
-	},
-	[FACTION_MPF] = {
-		ranks = {
-			{class = CLASS_MPU, points = 50},
-			{class = CLASS_EMP, points = 120},
-			{class = CLASS_MPF_LEADER, points = 220}
-		},
-		nextFaction = FACTION_OTA,
-		nextFactionPoints = 300
+		[FACTION_MPF] = {
+			ranks = {
+				{class = CLASS_MPU, points = 50},
+				{class = CLASS_EMP, points = 120},
+				{class = CLASS_MPF_LEADER, points = 220}
+			},
+			nextFaction = FACTION_OTA,
+			nextFactionPoints = 300
+		}
 	}
-}
 
---[[
-	Stabilization Forces (OTA) don't use civic points - promotion there is
-	memory replacement, a deliberate procedure Overwatch orders on a
-	character rather than something earned. /resleeve advances a character
-	exactly one step through this order per use.
-]]
-Schema.otaResleeveOrder = {
-	CLASS_OWS,
-	CLASS_OTA_SOLDIER,
-	CLASS_OTA_SHOTGUNNER,
-	CLASS_OTA_SUPPRESSOR,
-	CLASS_OTA_HEAVY,
-	CLASS_OTA_ORDINAL,
-	CLASS_EOW
-}
+	-- Stabilization Forces (OTA) don't use civic points - promotion there is
+	-- memory replacement, a deliberate procedure Overwatch orders on a
+	-- character rather than something earned. /resleeve advances a
+	-- character exactly one step through this order per use.
+	self.otaResleeveOrder = {
+		CLASS_OWS,
+		CLASS_OTA_SOLDIER,
+		CLASS_OTA_SHOTGUNNER,
+		CLASS_OTA_SUPPRESSOR,
+		CLASS_OTA_HEAVY,
+		CLASS_OTA_ORDINAL,
+		CLASS_EOW
+	}
 
---[[
-	Forced naming per faction:
-	- Conscripts keep their chosen name, prefixed with their current rank
-	  title (e.g. "Captain Max Desmond"). The rank title is just the
-	  class's own name, so no separate table is needed there.
-	- Metropolice Force drop their chosen name entirely for a callsign:
-	  "[<rank points>] <WORD> <###>", e.g. "[50] JURY 587". The word and
-	  number are picked once at faction transfer and stay fixed; only the
-	  bracketed point count updates as they earn more.
-	- Stabilization Forces use "<WORD> <###>", e.g. "ECHO 584", where the
-	  word is tied to their current rank (updates on each /resleeve) and
-	  the number is picked once at faction transfer and stays fixed.
-	These word lists are starting placeholders - rename freely.
-]]
-Schema.mpfCallsignWords = {
-	"VICTOR", "PATROL", "JURY", "DEFENDER", "SENTINEL", "WARDEN", "MARSHAL", "ENFORCER", "VANGUARD", "BASTION"
-}
+	-- Forced naming per faction:
+	-- - Conscripts keep their chosen name, prefixed with their current rank
+	--   title (e.g. "Captain Max Desmond"). The rank title is just the
+	--   class's own name, so no separate table is needed there.
+	-- - Metropolice Force drop their chosen name entirely for a callsign:
+	--   "[<rank points>] <WORD> <###>", e.g. "[50] JURY 587". The word and
+	--   number are picked once at faction transfer and stay fixed; only
+	--   the bracketed point count updates as they earn more.
+	-- - Stabilization Forces use "<WORD> <###>", e.g. "ECHO 584", where the
+	--   word is tied to their current rank (updates on each /resleeve) and
+	--   the number is picked once at faction transfer and stays fixed.
+	-- These word lists are starting placeholders - rename freely.
+	self.mpfCallsignWords = {
+		"VICTOR", "PATROL", "JURY", "DEFENDER", "SENTINEL", "WARDEN", "MARSHAL", "ENFORCER", "VANGUARD", "BASTION"
+	}
 
-Schema.otaCallsignWords = {
-	[CLASS_OWS] = "ECHO",
-	[CLASS_OTA_SOLDIER] = "FOXTROT",
-	[CLASS_OTA_SHOTGUNNER] = "GOLF",
-	[CLASS_OTA_SUPPRESSOR] = "HOTEL",
-	[CLASS_OTA_HEAVY] = "INDIA",
-	[CLASS_OTA_ORDINAL] = "JULIET",
-	[CLASS_EOW] = "KILO"
-}
+	self.otaCallsignWords = {
+		[CLASS_OWS] = "ECHO",
+		[CLASS_OTA_SOLDIER] = "FOXTROT",
+		[CLASS_OTA_SHOTGUNNER] = "GOLF",
+		[CLASS_OTA_SUPPRESSOR] = "HOTEL",
+		[CLASS_OTA_HEAVY] = "INDIA",
+		[CLASS_OTA_ORDINAL] = "JULIET",
+		[CLASS_EOW] = "KILO"
+	}
+end
+
+function Schema:OnLoaded()
+	self:BuildCivicLadders()
+end
 
 if (SERVER) then
 	--- Sets a Conscript character's display name to "<rank title> <chosen name>".
