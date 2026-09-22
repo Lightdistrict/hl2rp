@@ -234,6 +234,37 @@ end
 
 do
 	local COMMAND = {}
+	COMMAND.description = "Removes civic points from a character on behalf of Overwatch."
+	COMMAND.arguments = {
+		ix.type.character,
+		ix.type.number
+	}
+
+	function COMMAND:OnRun(client, target, amount)
+		local character = client:GetCharacter()
+		local bAuthorized = client:IsAdmin() or client:Team() == FACTION_OVERWATCH
+			or (character and character:HasFlags("o"))
+
+		if (!bAuthorized) then
+			return "@notNow"
+		end
+
+		amount = math.Round(amount)
+
+		if (amount == 0) then
+			return
+		end
+
+		Schema:AddCivicPoints(target, -amount)
+
+		client:Notify("Removed " .. amount .. " civic points from " .. target:GetName() .. ".")
+	end
+
+	ix.command.Add("RemoveCivicPoints", COMMAND)
+end
+
+do
+	local COMMAND = {}
 
 	function COMMAND:OnRun(client)
 		local character = client:GetCharacter()
