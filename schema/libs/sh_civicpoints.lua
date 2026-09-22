@@ -193,10 +193,7 @@ if (SERVER) then
 			self:UpdateMPFName(character)
 		end
 
-		local lastRank = ladder.ranks[#ladder.ranks]
-
-		if (ladder.nextFaction and lastRank and character:GetClass() == lastRank.class
-		and points >= ladder.nextFactionPoints) then
+		if (ladder.nextFaction and points >= ladder.nextFactionPoints) then
 			self:GrantFactionWhitelist(client, ladder.nextFaction)
 		end
 	end
