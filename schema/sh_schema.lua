@@ -21,6 +21,7 @@ ix.util.Include("meta/sh_character.lua")
 
 ix.flag.Add("v", "Access to light blackmarket goods.")
 ix.flag.Add("V", "Access to heavy blackmarket goods.")
+ix.flag.Add("o", "Access to award civic points on behalf of Overwatch.")
 
 ix.anim.SetModelClass("models/eliteghostcp.mdl", "metrocop")
 ix.anim.SetModelClass("models/eliteshockcp.mdl", "metrocop")

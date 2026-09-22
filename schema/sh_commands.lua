@@ -210,7 +210,11 @@ do
 	}
 
 	function COMMAND:OnRun(client, target, amount)
-		if (client:Team() != FACTION_OVERWATCH) then
+		local character = client:GetCharacter()
+		local bAuthorized = client:IsAdmin() or client:Team() == FACTION_OVERWATCH
+			or (character and character:HasFlags("o"))
+
+		if (!bAuthorized) then
 			return "@notNow"
 		end
 
