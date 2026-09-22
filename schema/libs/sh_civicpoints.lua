@@ -55,7 +55,74 @@ Schema.otaResleeveOrder = {
 	CLASS_EOW
 }
 
+--[[
+	Forced naming per faction:
+	- Conscripts keep their chosen name, prefixed with their current rank
+	  title (e.g. "Captain Max Desmond"). The rank title is just the
+	  class's own name, so no separate table is needed there.
+	- Metropolice Force drop their chosen name entirely for a callsign:
+	  "[<rank points>] <WORD> <###>", e.g. "[50] JURY 587". The word and
+	  number are picked once at faction transfer and stay fixed; only the
+	  bracketed point count updates as they earn more.
+	- Stabilization Forces use "<WORD> <###>", e.g. "ECHO 584", where the
+	  word is tied to their current rank (updates on each /resleeve) and
+	  the number is picked once at faction transfer and stays fixed.
+	These word lists are starting placeholders - rename freely.
+]]
+Schema.mpfCallsignWords = {
+	"VICTOR", "PATROL", "JURY", "DEFENDER", "SENTINEL", "WARDEN", "MARSHAL", "ENFORCER", "VANGUARD", "BASTION"
+}
+
+Schema.otaCallsignWords = {
+	[CLASS_OWS] = "ECHO",
+	[CLASS_OTA_SOLDIER] = "FOXTROT",
+	[CLASS_OTA_SHOTGUNNER] = "GOLF",
+	[CLASS_OTA_SUPPRESSOR] = "HOTEL",
+	[CLASS_OTA_HEAVY] = "INDIA",
+	[CLASS_OTA_ORDINAL] = "JULIET",
+	[CLASS_EOW] = "KILO"
+}
+
 if (SERVER) then
+	--- Sets a Conscript character's display name to "<rank title> <chosen name>".
+	-- @realm server
+	function Schema:UpdateConscriptName(character)
+		local class = ix.class.list[character:GetClass()]
+		local baseName = character:GetData("baseName")
+
+		if (!class or !baseName) then
+			return
+		end
+
+		character:SetName(class.name .. " " .. baseName)
+	end
+
+	--- Sets a Metropolice Force character's display name to "[<rank points>] <callsign> <number>".
+	-- @realm server
+	function Schema:UpdateMPFName(character)
+		local callsign = character:GetData("callsign")
+		local number = character:GetData("callsignNumber")
+
+		if (!callsign or !number) then
+			return
+		end
+
+		character:SetName("[" .. character:GetData("civicPoints", 0) .. "] " .. callsign .. " " .. number)
+	end
+
+	--- Sets a Stabilization Forces character's display name to "<rank word> <number>".
+	-- @realm server
+	function Schema:UpdateOTAName(character)
+		local word = self.otaCallsignWords[character:GetClass()]
+		local number = character:GetData("callsignNumber")
+
+		if (!word or !number) then
+			return
+		end
+
+		character:SetName(word .. " " .. number)
+	end
+
 	--- Adds (or removes, with a negative amount) civic points on a character, then checks for a promotion.
 	-- @realm server
 	function Schema:AddCivicPoints(character, amount)
@@ -107,6 +174,14 @@ if (SERVER) then
 			client:Notify("You have been promoted!")
 		end
 
+		local faction = character:GetFaction()
+
+		if (faction == FACTION_CONSCRIPT) then
+			self:UpdateConscriptName(character)
+		elseif (faction == FACTION_MPF) then
+			self:UpdateMPFName(character)
+		end
+
 		local lastRank = ladder.ranks[#ladder.ranks]
 
 		if (ladder.nextFaction and lastRank and character:GetClass() == lastRank.class
@@ -140,6 +215,15 @@ if (SERVER) then
 		end
 
 		character:KickClass()
+
+		if (factionID == FACTION_MPF) then
+			character:SetData("callsign", self.mpfCallsignWords[math.random(#self.mpfCallsignWords)])
+			character:SetData("callsignNumber", math.random(100, 999))
+			self:UpdateMPFName(character)
+		elseif (factionID == FACTION_OTA) then
+			character:SetData("callsignNumber", math.random(100, 999))
+			self:UpdateOTAName(character)
+		end
 
 		client:Notify("You have been promoted into " .. faction.name .. "!")
 	end
@@ -178,6 +262,7 @@ if (SERVER) then
 
 		character:SetClass(target)
 		hook.Run("PlayerJoinedClass", client, target, oldClass)
+		self:UpdateOTAName(character)
 
 		client:Notify("You have undergone memory replacement.")
 
