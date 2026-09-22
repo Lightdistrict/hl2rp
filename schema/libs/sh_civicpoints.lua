@@ -241,6 +241,21 @@ if (SERVER) then
 	function Schema:PlayerLoadedCharacter(client, character)
 		local faction = character:GetFaction()
 
+		-- Helix's own hook.Call dispatches Schema hooks BEFORE the core gamemode's
+		-- GM:PlayerLoadedCharacter, which is what normally assigns a fresh character's
+		-- default class - so on a brand new character, GetClass() isn't set yet at this
+		-- point. Assign it ourselves first so the name-building below has a real class
+		-- to read; this is a no-op for an existing character re-logging in, since their
+		-- saved class is already valid.
+		if (!ix.class.list[character:GetClass()]) then
+			for _, v in pairs(ix.class.list) do
+				if (v.faction == faction and v.isDefault) then
+					character:SetClass(v.index)
+					break
+				end
+			end
+		end
+
 		if (faction == FACTION_CONSCRIPT) then
 			if (!character:GetData("baseName")) then
 				character:SetData("baseName", character:GetName())
