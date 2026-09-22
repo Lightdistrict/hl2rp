@@ -23,27 +23,28 @@ function Schema:BuildCivicLadders()
 	self.civicLadders = {
 		[FACTION_CONSCRIPT] = {
 			ranks = {
-				{class = CLASS_CONSCRIPT_PFC, points = 25},
-				{class = CLASS_CONSCRIPT_CPL, points = 45},
-				{class = CLASS_CONSCRIPT_SGT, points = 70},
-				{class = CLASS_CONSCRIPT_SSGT, points = 100},
-				{class = CLASS_CONSCRIPT_MSGT, points = 135},
-				{class = CLASS_CONSCRIPT_LT, points = 175},
-				{class = CLASS_CONSCRIPT_CPT, points = 220},
-				{class = CLASS_CONSCRIPT_MAJ, points = 270},
-				{class = CLASS_CONSCRIPT_COL, points = 325}
+				{class = CLASS_CONSCRIPT_PFC, points = 10},
+				{class = CLASS_CONSCRIPT_CPL, points = 20},
+				{class = CLASS_CONSCRIPT_SGT, points = 30},
+				{class = CLASS_CONSCRIPT_SSGT, points = 40},
+				{class = CLASS_CONSCRIPT_MSGT, points = 50},
+				{class = CLASS_CONSCRIPT_LT, points = 60},
+				{class = CLASS_CONSCRIPT_CPT, points = 70},
+				{class = CLASS_CONSCRIPT_MAJ, points = 80},
+				{class = CLASS_CONSCRIPT_COL, points = 90}
 			},
 			nextFaction = FACTION_MPF,
-			nextFactionPoints = 400
+			nextFactionPoints = 70
 		},
 		[FACTION_MPF] = {
 			ranks = {
-				{class = CLASS_MPU, points = 50},
-				{class = CLASS_EMP, points = 120},
-				{class = CLASS_MPF_LEADER, points = 220}
+				{class = CLASS_MPO, points = 25},
+				{class = CLASS_PTL, points = 50},
+				{class = CLASS_PSL, points = 75},
+				{class = CLASS_RL, points = 100}
 			},
 			nextFaction = FACTION_OTA,
-			nextFactionPoints = 300
+			nextFactionPoints = 110
 		}
 	}
 
@@ -52,13 +53,13 @@ function Schema:BuildCivicLadders()
 	-- character rather than something earned. /resleeve advances a
 	-- character exactly one step through this order per use.
 	self.otaResleeveOrder = {
-		CLASS_OWS,
+		CLASS_OTA_GRUNT,
 		CLASS_OTA_SOLDIER,
 		CLASS_OTA_SHOTGUNNER,
 		CLASS_OTA_SUPPRESSOR,
 		CLASS_OTA_HEAVY,
 		CLASS_OTA_ORDINAL,
-		CLASS_EOW
+		CLASS_OTA_ELITE
 	}
 
 	-- Forced naming per faction:
@@ -78,13 +79,13 @@ function Schema:BuildCivicLadders()
 	}
 
 	self.otaCallsignWords = {
-		[CLASS_OWS] = "ECHO",
+		[CLASS_OTA_GRUNT] = "ECHO",
 		[CLASS_OTA_SOLDIER] = "FOXTROT",
 		[CLASS_OTA_SHOTGUNNER] = "GOLF",
 		[CLASS_OTA_SUPPRESSOR] = "HOTEL",
 		[CLASS_OTA_HEAVY] = "INDIA",
 		[CLASS_OTA_ORDINAL] = "JULIET",
-		[CLASS_EOW] = "KILO"
+		[CLASS_OTA_ELITE] = "KILO"
 	}
 end
 
