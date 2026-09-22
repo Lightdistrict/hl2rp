@@ -195,16 +195,16 @@ if (SERVER) then
 
 		if (ladder.nextFaction and lastRank and character:GetClass() == lastRank.class
 		and points >= ladder.nextFactionPoints) then
-			self:PromoteToFaction(character, ladder.nextFaction)
+			self:GrantFactionWhitelist(client, ladder.nextFaction)
 		end
 	end
 
-	--- Transfers a character into a new faction, resetting their civic points and assigning them
-	-- the new faction's default class.
+	--- Whitelists a player into a new faction once one of their characters has earned enough
+	-- points to graduate. Does NOT transfer their current character - that character stays exactly
+	-- as it is (e.g. permanently a Colonel), and the player makes a separate, brand new character in
+	-- the newly unlocked faction through the normal character creation menu whenever they want to.
 	-- @realm server
-	function Schema:PromoteToFaction(character, factionID)
-		local client = character:GetPlayer()
-
+	function Schema:GrantFactionWhitelist(client, factionID)
 		if (!IsValid(client)) then
 			return
 		end
@@ -215,23 +215,13 @@ if (SERVER) then
 			return
 		end
 
+		if (client:HasWhitelist(factionID)) then
+			return
+		end
+
 		client:SetWhitelisted(factionID, true)
-		character:SetFaction(factionID)
-		character:SetData("civicPoints", 0)
 
-		if (faction.OnTransferred) then
-			faction:OnTransferred(character)
-		end
-
-		character:KickClass()
-
-		if (factionID == FACTION_MPF) then
-			self:UpdateMPFName(character)
-		elseif (factionID == FACTION_OTA) then
-			self:UpdateOTAName(character)
-		end
-
-		client:Notify("You have been promoted into " .. faction.name .. "!")
+		client:Notify("You have proven yourself worthy of " .. faction.name .. ". You may now create a character in that faction from the character menu.")
 	end
 
 	-- NOTE: the actual PlayerLoadedCharacter hook that applies forced names lives in
