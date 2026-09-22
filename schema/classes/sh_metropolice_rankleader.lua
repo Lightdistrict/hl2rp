@@ -1,5 +1,5 @@
-CLASS.name = "Combine Elite"
-CLASS.faction = FACTION_OTA
+CLASS.name = "Rank Leader"
+CLASS.faction = FACTION_MPF
 
 function CLASS:CanSwitchTo(client)
 	return false
@@ -9,8 +9,8 @@ function CLASS:OnSet(client)
 	local character = client:GetCharacter()
 
 	if (character) then
-		character:SetModel("models/combine_super_soldier.mdl")
+		character:SetModel("models/eliteghostcp.mdl")
 	end
 end
 
-CLASS_EOW = CLASS.index
+CLASS_MPF_LEADER = CLASS.index

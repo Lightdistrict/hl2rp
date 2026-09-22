@@ -1,4 +1,4 @@
-CLASS.name = "Combine Elite"
+CLASS.name = "Combine Ordinal"
 CLASS.faction = FACTION_OTA
 
 function CLASS:CanSwitchTo(client)
@@ -9,8 +9,8 @@ function CLASS:OnSet(client)
 	local character = client:GetCharacter()
 
 	if (character) then
-		character:SetModel("models/combine_super_soldier.mdl")
+		character:SetModel("models/synapse/combine/combine_soldier_elite_h.mdl")
 	end
 end
 
-CLASS_EOW = CLASS.index
+CLASS_OTA_ORDINAL = CLASS.index

@@ -200,3 +200,46 @@ do
 
 	ix.command.Add("CharSearch", COMMAND)
 end
+
+do
+	local COMMAND = {}
+	COMMAND.description = "Awards civic points to a character on behalf of Overwatch."
+	COMMAND.arguments = {
+		ix.type.character,
+		ix.type.number
+	}
+
+	function COMMAND:OnRun(client, target, amount)
+		if (client:Team() != FACTION_OVERWATCH) then
+			return "@notNow"
+		end
+
+		amount = math.Round(amount)
+
+		if (amount == 0) then
+			return
+		end
+
+		Schema:AddCivicPoints(target, amount)
+
+		client:Notify("Awarded " .. amount .. " civic points to " .. target:GetName() .. ".")
+	end
+
+	ix.command.Add("AwardCivicPoints", COMMAND)
+end
+
+do
+	local COMMAND = {}
+
+	function COMMAND:OnRun(client)
+		local character = client:GetCharacter()
+
+		if (!character) then
+			return
+		end
+
+		client:Notify("You have " .. character:GetData("civicPoints", 0) .. " civic points.")
+	end
+
+	ix.command.Add("CivicPoints", COMMAND)
+end
