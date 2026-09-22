@@ -254,7 +254,7 @@ do
 	COMMAND.arguments = ix.type.character
 
 	function COMMAND:OnRun(client, target)
-		if (client:Team() != FACTION_OVERWATCH) then
+		if (!client:IsAdmin() and client:Team() != FACTION_OVERWATCH) then
 			return "@notNow"
 		end
 
