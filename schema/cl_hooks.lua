@@ -146,14 +146,31 @@ function Schema:CreateCharacterInfo(panel)
 		panel.cid:Dock(TOP)
 		panel.cid:DockMargin(0, 0, 0, 8)
 	end
+
+	if (Schema.civicLadders[LocalPlayer():Team()]) then
+		panel.civicPoints = panel:Add("ixListRow")
+		panel.civicPoints:SetList(panel.list)
+		panel.civicPoints:Dock(TOP)
+		panel.civicPoints:DockMargin(0, 0, 0, 8)
+	end
 end
 
 -- populates labels in the status screen
-function Schema:UpdateCharacterInfo(panel)
+function Schema:UpdateCharacterInfo(panel, character)
 	if (LocalPlayer():Team() == FACTION_CITIZEN) then
 		panel.cid:SetLabelText(L("citizenid"))
 		panel.cid:SetText(string.format("##%s", LocalPlayer():GetCharacter():GetData("cid") or "UNKNOWN"))
 		panel.cid:SizeToContents()
+	end
+
+	if (IsValid(panel.civicPoints)) then
+		character = character or LocalPlayer():GetCharacter()
+
+		local label = LocalPlayer():Team() == FACTION_MPF and "Rank Points" or "Civic Points"
+
+		panel.civicPoints:SetLabelText(label)
+		panel.civicPoints:SetText(tostring(character:GetData("civicPoints", 0)))
+		panel.civicPoints:SizeToContents()
 	end
 end
 
