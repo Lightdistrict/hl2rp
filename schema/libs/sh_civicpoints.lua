@@ -34,10 +34,11 @@ function Schema:BuildCivicLadders()
 				{class = CLASS_CONSCRIPT_COL, points = 90}
 			},
 			nextFaction = FACTION_MPF,
-			nextFactionPoints = 70
+			nextFactionPoints = 60
 		},
 		[FACTION_MPF] = {
 			ranks = {
+				{class = CLASS_MPR, points = 0},
 				{class = CLASS_MPO, points = 25},
 				{class = CLASS_PTL, points = 50},
 				{class = CLASS_PSL, points = 75},
@@ -80,7 +81,7 @@ function Schema:BuildCivicLadders()
 
 	self.otaCallsignWords = {
 		[CLASS_OTA_GRUNT] = "ECHO",
-		[CLASS_OTA_SOLDIER] = "FOXTROT",
+		[CLASS_OTA_SOLDIER] = "XRAY",
 		[CLASS_OTA_SHOTGUNNER] = "GOLF",
 		[CLASS_OTA_SUPPRESSOR] = "HOTEL",
 		[CLASS_OTA_HEAVY] = "INDIA",
