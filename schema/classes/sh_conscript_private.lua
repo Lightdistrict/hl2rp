@@ -1,8 +1,5 @@
 CLASS.name = "Private"
 CLASS.faction = FACTION_CONSCRIPT
-
-function CLASS:CanSwitchTo(client)
-	return false
-end
+CLASS.isDefault = true
 
 CLASS_CONSCRIPT_PVT = CLASS.index

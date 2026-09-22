@@ -23,7 +23,6 @@ function Schema:BuildCivicLadders()
 	self.civicLadders = {
 		[FACTION_CONSCRIPT] = {
 			ranks = {
-				{class = CLASS_CONSCRIPT_PVT, points = 10},
 				{class = CLASS_CONSCRIPT_PFC, points = 25},
 				{class = CLASS_CONSCRIPT_CPL, points = 45},
 				{class = CLASS_CONSCRIPT_SGT, points = 70},
@@ -227,15 +226,41 @@ if (SERVER) then
 		character:KickClass()
 
 		if (factionID == FACTION_MPF) then
-			character:SetData("callsign", self.mpfCallsignWords[math.random(#self.mpfCallsignWords)])
-			character:SetData("callsignNumber", math.random(100, 999))
 			self:UpdateMPFName(character)
 		elseif (factionID == FACTION_OTA) then
-			character:SetData("callsignNumber", math.random(100, 999))
 			self:UpdateOTAName(character)
 		end
 
 		client:Notify("You have been promoted into " .. faction.name .. "!")
+	end
+
+	--- Applies the correct forced name for Conscript/MPF/OTA characters whenever they load in -
+	-- covers the very first spawn (where OnCharacterCreated fires before the default class is
+	-- assigned, too early to build the name) and self-heals anything that drifted since.
+	-- @realm server
+	function Schema:PlayerLoadedCharacter(client, character)
+		local faction = character:GetFaction()
+
+		if (faction == FACTION_CONSCRIPT) then
+			if (!character:GetData("baseName")) then
+				character:SetData("baseName", character:GetName())
+			end
+
+			self:UpdateConscriptName(character)
+		elseif (faction == FACTION_MPF) then
+			if (!character:GetData("callsign")) then
+				character:SetData("callsign", self.mpfCallsignWords[math.random(#self.mpfCallsignWords)])
+				character:SetData("callsignNumber", math.random(100, 999))
+			end
+
+			self:UpdateMPFName(character)
+		elseif (faction == FACTION_OTA) then
+			if (!character:GetData("callsignNumber")) then
+				character:SetData("callsignNumber", math.random(100, 999))
+			end
+
+			self:UpdateOTAName(character)
+		end
 	end
 
 	--- Advances a Stabilization Forces character exactly one step through the memory replacement

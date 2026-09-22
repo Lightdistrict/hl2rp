@@ -20,12 +20,8 @@ function FACTION:OnCharacterCreated(client, character)
 	character:SetData("civicPoints", 0)
 end
 
-function FACTION:GetDefaultName(client)
-	return "OTA-ECHO.GRT-" .. Schema:ZeroNumber(math.random(1, 99999), 5), true
-end
-
 function FACTION:OnTransferred(character)
-	character:SetName(self:GetDefaultName())
+	character:SetData("callsignNumber", math.random(100, 999))
 	character:SetModel(self.models[1])
 end
 

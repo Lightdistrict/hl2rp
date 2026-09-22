@@ -25,9 +25,6 @@ FACTION.isGloballyRecognized = true
 
 function FACTION:OnCharacterCreated(client, character)
 	character:SetData("civicPoints", 0)
-	character:SetData("baseName", character:GetName())
-
-	Schema:UpdateConscriptName(character)
 end
 
 FACTION_CONSCRIPT = FACTION.index
