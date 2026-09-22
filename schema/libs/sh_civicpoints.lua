@@ -36,17 +36,23 @@ Schema.civicLadders = {
 		},
 		nextFaction = FACTION_OTA,
 		nextFactionPoints = 300
-	},
-	[FACTION_OTA] = {
-		ranks = {
-			{class = CLASS_OTA_SOLDIER, points = 60},
-			{class = CLASS_OTA_SHOTGUNNER, points = 130},
-			{class = CLASS_OTA_SUPPRESSOR, points = 210},
-			{class = CLASS_OTA_HEAVY, points = 300},
-			{class = CLASS_OTA_ORDINAL, points = 400},
-			{class = CLASS_EOW, points = 520}
-		}
 	}
+}
+
+--[[
+	Stabilization Forces (OTA) don't use civic points - promotion there is
+	memory replacement, a deliberate procedure Overwatch orders on a
+	character rather than something earned. /resleeve advances a character
+	exactly one step through this order per use.
+]]
+Schema.otaResleeveOrder = {
+	CLASS_OWS,
+	CLASS_OTA_SOLDIER,
+	CLASS_OTA_SHOTGUNNER,
+	CLASS_OTA_SUPPRESSOR,
+	CLASS_OTA_HEAVY,
+	CLASS_OTA_ORDINAL,
+	CLASS_EOW
 }
 
 if (SERVER) then
@@ -136,5 +142,45 @@ if (SERVER) then
 		character:KickClass()
 
 		client:Notify("You have been promoted into " .. faction.name .. "!")
+	end
+
+	--- Advances a Stabilization Forces character exactly one step through the memory replacement
+	-- order (see Schema.otaResleeveOrder). Returns false with a reason string if the character isn't
+	-- in Stabilization Forces or is already at the final stage.
+	-- @realm server
+	function Schema:ResleeveCharacter(character)
+		local client = character:GetPlayer()
+
+		if (!IsValid(client)) then
+			return false, "invalid"
+		end
+
+		if (character:GetFaction() != FACTION_OTA) then
+			return false, "notOTA"
+		end
+
+		local order = self.otaResleeveOrder
+		local currentIndex
+
+		for i, class in ipairs(order) do
+			if (class == character:GetClass()) then
+				currentIndex = i
+				break
+			end
+		end
+
+		if (!currentIndex or currentIndex >= #order) then
+			return false, "maxStage"
+		end
+
+		local target = order[currentIndex + 1]
+		local oldClass = character:GetClass()
+
+		character:SetClass(target)
+		hook.Run("PlayerJoinedClass", client, target, oldClass)
+
+		client:Notify("You have undergone memory replacement.")
+
+		return true
 	end
 end

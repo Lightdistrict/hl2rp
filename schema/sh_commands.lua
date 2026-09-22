@@ -243,3 +243,31 @@ do
 
 	ix.command.Add("CivicPoints", COMMAND)
 end
+
+do
+	local COMMAND = {}
+	COMMAND.description = "Orders a Stabilization Forces character in for memory replacement, advancing them one rank."
+	COMMAND.arguments = ix.type.character
+
+	function COMMAND:OnRun(client, target)
+		if (client:Team() != FACTION_OVERWATCH) then
+			return "@notNow"
+		end
+
+		local success, reason = Schema:ResleeveCharacter(target)
+
+		if (!success) then
+			if (reason == "notOTA") then
+				client:Notify(target:GetName() .. " is not a member of Stabilization Forces.")
+			elseif (reason == "maxStage") then
+				client:Notify(target:GetName() .. " has already undergone full memory replacement.")
+			end
+
+			return
+		end
+
+		client:Notify("Ordered " .. target:GetName() .. " in for memory replacement.")
+	end
+
+	ix.command.Add("Resleeve", COMMAND)
+end
