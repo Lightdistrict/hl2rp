@@ -234,49 +234,11 @@ if (SERVER) then
 		client:Notify("You have been promoted into " .. faction.name .. "!")
 	end
 
-	--- Applies the correct forced name for Conscript/MPF/OTA characters whenever they load in -
-	-- covers the very first spawn (where OnCharacterCreated fires before the default class is
-	-- assigned, too early to build the name) and self-heals anything that drifted since.
-	-- @realm server
-	function Schema:PlayerLoadedCharacter(client, character)
-		local faction = character:GetFaction()
-
-		-- Helix's own hook.Call dispatches Schema hooks BEFORE the core gamemode's
-		-- GM:PlayerLoadedCharacter, which is what normally assigns a fresh character's
-		-- default class - so on a brand new character, GetClass() isn't set yet at this
-		-- point. Assign it ourselves first so the name-building below has a real class
-		-- to read; this is a no-op for an existing character re-logging in, since their
-		-- saved class is already valid.
-		if (!ix.class.list[character:GetClass()]) then
-			for _, v in pairs(ix.class.list) do
-				if (v.faction == faction and v.isDefault) then
-					character:SetClass(v.index)
-					break
-				end
-			end
-		end
-
-		if (faction == FACTION_CONSCRIPT) then
-			if (!character:GetData("baseName")) then
-				character:SetData("baseName", character:GetName())
-			end
-
-			self:UpdateConscriptName(character)
-		elseif (faction == FACTION_MPF) then
-			if (!character:GetData("callsign")) then
-				character:SetData("callsign", self.mpfCallsignWords[math.random(#self.mpfCallsignWords)])
-				character:SetData("callsignNumber", math.random(100, 999))
-			end
-
-			self:UpdateMPFName(character)
-		elseif (faction == FACTION_OTA) then
-			if (!character:GetData("callsignNumber")) then
-				character:SetData("callsignNumber", math.random(100, 999))
-			end
-
-			self:UpdateOTAName(character)
-		end
-	end
+	-- NOTE: the actual PlayerLoadedCharacter hook that applies forced names lives in
+	-- schema/sv_hooks.lua, not here - this schema already defines Schema:PlayerLoadedCharacter
+	-- there, and a second definition here would silently overwrite/be overwritten by it
+	-- (function Schema:X() is just Schema.X = function() - last one loaded wins). Always
+	-- check for an existing Schema:<hookname> definition elsewhere before adding a new one.
 
 	--- Advances a Stabilization Forces character exactly one step through the memory replacement
 	-- order (see Schema.otaResleeveOrder). Returns false with a reason string if the character isn't

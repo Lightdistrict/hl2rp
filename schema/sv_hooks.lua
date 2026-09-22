@@ -106,6 +106,39 @@ function Schema:PlayerLoadedCharacter(client, character, oldCharacter)
 	elseif (client:IsCombine()) then
 		client:AddCombineDisplayMessage("@cCombineLoaded")
 	end
+
+	-- Force the Conscript/MPF/OTA display name for this character. This runs before Helix's own
+	-- GM:PlayerLoadedCharacter assigns a fresh character's default class (Schema hooks run before
+	-- the core gamemode hook of the same name), so assign it ourselves first if it isn't valid yet.
+	if (!ix.class.list[character:GetClass()]) then
+		for _, v in pairs(ix.class.list) do
+			if (v.faction == faction and v.isDefault) then
+				character:SetClass(v.index)
+				break
+			end
+		end
+	end
+
+	if (faction == FACTION_CONSCRIPT) then
+		if (!character:GetData("baseName")) then
+			character:SetData("baseName", character:GetName())
+		end
+
+		self:UpdateConscriptName(character)
+	elseif (faction == FACTION_MPF) then
+		if (!character:GetData("callsign")) then
+			character:SetData("callsign", self.mpfCallsignWords[math.random(#self.mpfCallsignWords)])
+			character:SetData("callsignNumber", math.random(100, 999))
+		end
+
+		self:UpdateMPFName(character)
+	elseif (faction == FACTION_OTA) then
+		if (!character:GetData("callsignNumber")) then
+			character:SetData("callsignNumber", math.random(100, 999))
+		end
+
+		self:UpdateOTAName(character)
+	end
 end
 
 function Schema:CharacterVarChanged(character, key, oldValue, value)
