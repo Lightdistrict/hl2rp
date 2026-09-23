@@ -4,6 +4,6 @@ ITEM.model = "models/weapons/w_grenade.mdl"
 ITEM.class = "weapon_frag"
 ITEM.weaponCategory = "grenade"
 ITEM.classes = {CLASS_OTA_ELITE}
-ITEM.flag = "V"
+ITEM.flag = "k"
 ITEM.width = 1
 ITEM.height = 1
