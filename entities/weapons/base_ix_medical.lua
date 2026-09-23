@@ -38,11 +38,10 @@ SWEP.UseHands = false
 SWEP.IsAlwaysRaised = true
 SWEP.HoldType = "normal"
 
--- Overridden per item: how much health it restores, how far you can reach a
--- target with it, and how long the action bar takes before it applies.
+-- Overridden per item: how much health it restores and how far you can
+-- reach a target with it.
 SWEP.HealAmount = 20
 SWEP.UseRange = 96
-SWEP.UseTime = 2
 
 -- luacheck: globals ACT_VM_FISTS_DRAW ACT_VM_FISTS_HOLSTER
 ACT_VM_FISTS_DRAW = 2
@@ -91,11 +90,14 @@ function SWEP:PrimaryAttack()
 		return
 	end
 
+	self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
+	self.Owner:SetAnimation(PLAYER_ATTACK1)
+
 	if (CLIENT) then
 		return
 	end
 
-	if (self.bUsing or !self.Owner:GetCharacter()) then
+	if (!self.Owner:GetCharacter()) then
 		return
 	end
 
@@ -107,35 +109,16 @@ function SWEP:PrimaryAttack()
 		return
 	end
 
-	self.bUsing = true
+	target:SetHealth(math.min(target:Health() + self.HealAmount, target:GetMaxHealth()))
+	target:EmitSound("items/medshot4.wav")
 
-	local weapon = self
-	local owner = self.Owner
+	if (target != self.Owner) then
+		target:Notify(self.Owner:Name().." has used "..self.PrintName.." on you.")
+	end
 
-	owner:SetAction("Using "..self.PrintName.." on "..(target == owner and "yourself" or target:Name()).."...", self.UseTime, function()
-		weapon.bUsing = false
+	local item = self.ixItem
 
-		if (!IsValid(weapon) or !IsValid(owner) or !IsValid(target)) then
-			return
-		end
-
-		if (owner:GetPos():DistToSqr(target:GetPos()) > (weapon.UseRange * 2)^2) then
-			owner:Notify("You are no longer close enough.")
-
-			return
-		end
-
-		target:SetHealth(math.min(target:Health() + weapon.HealAmount, target:GetMaxHealth()))
-		target:EmitSound("items/medshot4.wav")
-
-		if (target != owner) then
-			target:Notify(owner:Name().." has used "..weapon.PrintName.." on you.")
-		end
-
-		local item = weapon.ixItem
-
-		if (item) then
-			item:Remove()
-		end
-	end)
+	if (item) then
+		item:Remove()
+	end
 end
