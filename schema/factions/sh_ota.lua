@@ -10,6 +10,7 @@ FACTION.runSounds = {[0] = "NPC_CombineS.RunFootstepLeft", [1] = "NPC_CombineS.R
 
 function FACTION:OnCharacterCreated(client, character)
 	local inventory = character:GetInventory()
+	local id = Schema:ZeroNumber(math.random(1, 99999), 5)
 
 	inventory:Add("pistol", 1)
 	inventory:Add("pistolammo", 2)
@@ -18,6 +19,9 @@ function FACTION:OnCharacterCreated(client, character)
 	inventory:Add("ar2ammo", 2)
 
 	character:SetData("civicPoints", 0)
+	character:SetData("cid", id)
+
+	inventory:Add("cid_ota", 1, {id = id})
 end
 
 function FACTION:OnTransferred(character)

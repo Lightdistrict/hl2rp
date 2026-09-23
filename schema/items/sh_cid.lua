@@ -1,8 +1,5 @@
 
-ITEM.name = "Citizen ID"
-ITEM.model = Model("models/gibs/metal_gib4.mdl")
-ITEM.description = "A citizen identification card with ID #%s, assigned to %s."
-
-function ITEM:GetDescription()
-	return string.format(self.description, self:GetData("id", "00000"), self:GetData("name", "nobody"))
-end
+ITEM.name = "Citizen Identification Card"
+ITEM.model = Model("models/dorado/tarjetazero.mdl")
+ITEM.base = "base_idcard"
+ITEM.cardTitle = "Citizen Identification Card"

@@ -24,7 +24,12 @@ FACTION.isDefault = true
 FACTION.isGloballyRecognized = true
 
 function FACTION:OnCharacterCreated(client, character)
+	local id = Schema:ZeroNumber(math.random(1, 99999), 5)
+
 	character:SetData("civicPoints", 0)
+	character:SetData("cid", id)
+
+	character:GetInventory():Add("cid_conscript", 1, {id = id})
 end
 
 FACTION_CONSCRIPT = FACTION.index
