@@ -92,6 +92,16 @@ function SWEP:PrimaryAttack()
 		return
 	end
 
+	local target = self:GetUseTarget()
+
+	if (!target:Alive() or target:Health() >= target:GetMaxHealth()) then
+		if (SERVER) then
+			self.Owner:Notify((target == self.Owner and "You are" or (target:Name().." is")).." already at full health.")
+		end
+
+		return
+	end
+
 	self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
 	self.Owner:SetAnimation(PLAYER_ATTACK1)
 
@@ -100,14 +110,6 @@ function SWEP:PrimaryAttack()
 	end
 
 	if (!self.Owner:GetCharacter()) then
-		return
-	end
-
-	local target = self:GetUseTarget()
-
-	if (!target:Alive() or target:Health() >= target:GetMaxHealth()) then
-		self.Owner:Notify((target == self.Owner and "You are" or (target:Name().." is")).." already at full health.")
-
 		return
 	end
 
