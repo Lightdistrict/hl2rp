@@ -38,10 +38,12 @@ SWEP.UseHands = false
 SWEP.IsAlwaysRaised = true
 SWEP.HoldType = "normal"
 
--- Overridden per item: how much health it restores and how far you can
--- reach a target with it.
+-- Overridden per item: how much health it restores, how far you can reach a
+-- target with it, and roughly how long its use animation takes (the heal
+-- and item consumption wait this long so the animation isn't cut short).
 SWEP.HealAmount = 20
 SWEP.UseRange = 96
+SWEP.UseTime = 1.2
 
 -- luacheck: globals ACT_VM_FISTS_DRAW ACT_VM_FISTS_HOLSTER
 ACT_VM_FISTS_DRAW = 2
@@ -84,7 +86,7 @@ function SWEP:GetUseTarget()
 end
 
 function SWEP:PrimaryAttack()
-	self:SetNextPrimaryFire(CurTime() + 1)
+	self:SetNextPrimaryFire(CurTime() + self.UseTime)
 
 	if (!IsFirstTimePredicted()) then
 		return
@@ -109,16 +111,27 @@ function SWEP:PrimaryAttack()
 		return
 	end
 
-	target:SetHealth(math.min(target:Health() + self.HealAmount, target:GetMaxHealth()))
-	target:EmitSound("items/medshot4.wav")
+	local weapon = self
+	local owner = self.Owner
 
-	if (target != self.Owner) then
-		target:Notify(self.Owner:Name().." has used "..self.PrintName.." on you.")
-	end
+	-- Wait for the use animation to actually finish playing before healing
+	-- and consuming the item, instead of yanking the weapon away mid-anim.
+	timer.Simple(self.UseTime, function()
+		if (!IsValid(weapon) or !IsValid(owner) or !IsValid(target) or owner:GetActiveWeapon() != weapon) then
+			return
+		end
 
-	local item = self.ixItem
+		target:SetHealth(math.min(target:Health() + weapon.HealAmount, target:GetMaxHealth()))
+		target:EmitSound("items/medshot4.wav")
 
-	if (item) then
-		item:Remove()
-	end
+		if (target != owner) then
+			target:Notify(owner:Name().." has used "..weapon.PrintName.." on you.")
+		end
+
+		local item = weapon.ixItem
+
+		if (item) then
+			item:Remove()
+		end
+	end)
 end
