@@ -4,4 +4,4 @@ ITEM.ammo = "pistol" -- type of the ammo
 ITEM.ammoAmount = 30 -- amount of the ammo
 ITEM.description = "A Box that contains %s of Pistol Ammo"
 ITEM.classes = {CLASS_PSL, CLASS_OTA_ELITE}
-ITEM.flag = "k"
+ITEM.flag = "v"

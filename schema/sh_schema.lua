@@ -19,7 +19,7 @@ ix.util.Include("meta/sh_player.lua")
 ix.util.Include("meta/sv_player.lua")
 ix.util.Include("meta/sh_character.lua")
 
-ix.flag.Add("k", "Access to Combine technology weapons.")
+ix.flag.Add("v", "Access to handle Combine technology weapons.")
 ix.flag.Add("o", "Access to award civic points on behalf of Overwatch.")
 
 ix.anim.SetModelClass("models/eliteghostcp.mdl", "metrocop")
