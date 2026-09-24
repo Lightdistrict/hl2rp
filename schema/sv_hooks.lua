@@ -303,10 +303,14 @@ function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers,
 				end
 
 				if (info.sound) then
+					-- info.sound can be a single path, or a table of paths to pick a random one from
+					-- each time (e.g. several taunt/reload/idle variants registered under one key)
+					local sound = istable(info.sound) and info.sound[math.random(#info.sound)] or info.sound
+
 					if (info.global) then
-						netstream.Start(nil, "PlaySound", info.sound)
+						netstream.Start(nil, "PlaySound", sound)
 					else
-						local sounds = {info.sound}
+						local sounds = {sound}
 
 						if (speaker:IsCombine()) then
 							speaker.bTypingBeep = nil
