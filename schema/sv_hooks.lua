@@ -156,12 +156,102 @@ function Schema:CharacterVarChanged(character, key, oldValue, value)
 	end
 end
 
+-- Maps a traced surfaceprop name to one of our footstep sound categories.
+-- Source surfaceprops vary a lot by content pack (e.g. "wood.plank" vs
+-- "wood"), so this matches by substring rather than requiring an exact
+-- name - tune if a material isn't picking the right category in-game.
+local FOOTSTEP_MATERIAL_ALIASES = {
+	{"metalgrate", "metalgrate"},
+	{"grate", "metalgrate"},
+	{"concrete", "concrete"},
+	{"gravel", "gravel"},
+	{"ladder", "ladder"},
+	{"rubber", "rubber"},
+	{"wade", "wade"},
+	{"slosh", "slosh"},
+	{"water", "slosh"},
+	{"grass", "grass"},
+	{"metal", "metal"},
+	{"snow", "snow"},
+	{"tile", "tile"},
+	{"sand", "sand"},
+	{"wood", "wood"},
+	{"woodpanel", "woodpanel"},
+	{"mud", "mud"},
+	{"dirt", "dirt"},
+	{"duct", "duct"},
+	{"vent", "duct"}
+}
+
+-- How many numbered variants each category has (most are 1-4, but not all).
+local FOOTSTEP_MATERIAL_COUNTS = {
+	concrete = 4,
+	dirt = 4,
+	duct = 4,
+	grass = 4,
+	gravel = 4,
+	ladder = 4,
+	metal = 4,
+	metalgrate = 4,
+	mud = 4,
+	rubber = 1,
+	sand = 4,
+	slosh = 4,
+	snow = 6,
+	tile = 4,
+	wade = 8,
+	wood = 4,
+	woodpanel = 4
+}
+
+-- Per-faction folder under sound/footsteps/<folder>/ - add more factions here
+-- once their own footstep packs are ready.
+Schema.footstepFactionFolders = Schema.footstepFactionFolders or {}
+
+function Schema:RegisterFootstepFaction(factionID, folder)
+	self.footstepFactionFolders[factionID] = folder
+end
+
+function Schema:GetFootstepMaterial(position)
+	local data = {}
+		data.start = position + Vector(0, 0, 4)
+		data.endpos = position - Vector(0, 0, 24)
+	local trace = util.TraceLine(data)
+	local propName = string.lower(util.GetSurfacePropName(trace.SurfaceProps) or "")
+
+	for _, pair in ipairs(FOOTSTEP_MATERIAL_ALIASES) do
+		if (propName:find(pair[1], 1, true)) then
+			return pair[2]
+		end
+	end
+end
+
 function Schema:PlayerFootstep(client, position, foot, soundName, volume)
 	local factionTable = ix.faction.Get(client:Team())
 
 	if (factionTable.runSounds and client:IsRunning()) then
 		client:EmitSound(factionTable.runSounds[foot])
 		return true
+	end
+
+	local folder = self.footstepFactionFolders[client:Team()]
+
+	if (folder) then
+		local material = self:GetFootstepMaterial(position)
+		local count = material and FOOTSTEP_MATERIAL_COUNTS[material]
+
+		if (count) then
+			client.ixFootstepIndex = client.ixFootstepIndex or {}
+
+			local index = (client.ixFootstepIndex[material] or 0) % count + 1
+			client.ixFootstepIndex[material] = index
+
+			local fileName = count == 1 and material or (material..index)
+
+			client:EmitSound(string.format("footsteps/%s/%s.wav", folder, fileName))
+
+			return true
+		end
 	end
 
 	client:EmitSound(soundName)
@@ -465,3 +555,5 @@ netstream.Hook("ViewObjectivesUpdate", function(client, text)
 		Schema:AddCombineDisplayMessage("@cViewObjectivesFiller", nil, client, date:spanseconds())
 	end
 end)
+
+Schema:RegisterFootstepFaction(FACTION_CONSCRIPT, "conscripts")
