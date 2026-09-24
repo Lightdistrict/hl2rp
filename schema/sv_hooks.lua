@@ -204,14 +204,6 @@ local FOOTSTEP_MATERIAL_COUNTS = {
 	woodpanel = 4
 }
 
--- Per-faction folder under sound/footsteps/<folder>/ - add more factions here
--- once their own footstep packs are ready.
-Schema.footstepFactionFolders = Schema.footstepFactionFolders or {}
-
-function Schema:RegisterFootstepFaction(factionID, folder)
-	self.footstepFactionFolders[factionID] = folder
-end
-
 function Schema:GetFootstepMaterial(position)
 	local data = {}
 		data.start = position + Vector(0, 0, 4)
@@ -555,5 +547,3 @@ netstream.Hook("ViewObjectivesUpdate", function(client, text)
 		Schema:AddCombineDisplayMessage("@cViewObjectivesFiller", nil, client, date:spanseconds())
 	end
 end)
-
-Schema:RegisterFootstepFaction(FACTION_CONSCRIPT, "conscripts")

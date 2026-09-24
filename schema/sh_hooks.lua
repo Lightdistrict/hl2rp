@@ -53,3 +53,15 @@ end
 function Schema:CanDrive()
 	return false
 end
+
+-- Per-faction folder under sound/footsteps/<folder>/ - shared so both the
+-- server (which picks and emits the actual sound) and the client (which
+-- needs to suppress its own locally-predicted default footstep sound) know
+-- which factions have a custom footstep pack registered.
+Schema.footstepFactionFolders = Schema.footstepFactionFolders or {}
+
+function Schema:RegisterFootstepFaction(factionID, folder)
+	self.footstepFactionFolders[factionID] = folder
+end
+
+Schema:RegisterFootstepFaction(FACTION_CONSCRIPT, "conscripts")
