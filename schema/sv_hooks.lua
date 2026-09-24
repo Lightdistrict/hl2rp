@@ -218,6 +218,18 @@ function Schema:GetFootstepMaterial(position)
 	end
 end
 
+-- Down-maps our custom categories to the (smaller) set of stock HL2
+-- footstep materials, for factions without their own registered pack -
+-- stock content doesn't have distinct duct/metalgrate/mud/rubber/woodpanel
+-- files, so those fall back to their closest stock equivalent.
+local FOOTSTEP_STOCK_MATERIAL = {
+	duct = "metal",
+	metalgrate = "metal",
+	mud = "dirt",
+	rubber = "metal",
+	woodpanel = "wood"
+}
+
 function Schema:PlayerFootstep(client, position, foot, soundName, volume)
 	local factionTable = ix.faction.Get(client:Team())
 
@@ -226,27 +238,40 @@ function Schema:PlayerFootstep(client, position, foot, soundName, volume)
 		return true
 	end
 
-	local folder = self.footstepFactionFolders[client:Team()]
+	local material = self:GetFootstepMaterial(position)
 
-	if (folder) then
-		local material = self:GetFootstepMaterial(position)
-		local count = material and FOOTSTEP_MATERIAL_COUNTS[material]
-
-		if (count) then
-			client.ixFootstepIndex = client.ixFootstepIndex or {}
-
-			local index = (client.ixFootstepIndex[material] or 0) % count + 1
-			client.ixFootstepIndex[material] = index
-
-			local fileName = count == 1 and material or (material..index)
-
-			client:EmitSound(string.format("footsteps/%s/%s.wav", folder, fileName))
-
-			return true
-		end
+	if (!material) then
+		client:EmitSound(soundName)
+		return true
 	end
 
-	client:EmitSound(soundName)
+	local folder = self.footstepFactionFolders[client:Team()]
+
+	client.ixFootstepIndex = client.ixFootstepIndex or {}
+
+	local path
+
+	if (folder and FOOTSTEP_MATERIAL_COUNTS[material]) then
+		local count = FOOTSTEP_MATERIAL_COUNTS[material]
+		local index = (client.ixFootstepIndex[material] or 0) % count + 1
+		client.ixFootstepIndex[material] = index
+
+		local fileName = count == 1 and material or (material..index)
+
+		path = string.format("footsteps/%s/%s.wav", folder, fileName)
+	else
+		-- no custom pack for this faction/material - fall back to the stock
+		-- HL2 footstep files instead of the named GameSound, since those are
+		-- muted client-side to stop the engine's own local-prediction
+		-- footstep sound from doubling up with ours (see cl_hooks.lua)
+		local stockMaterial = FOOTSTEP_STOCK_MATERIAL[material] or material
+		local index = (client.ixFootstepIndex[stockMaterial] or 0) % 4 + 1
+		client.ixFootstepIndex[stockMaterial] = index
+
+		path = string.format("player/footsteps/%s%d.wav", stockMaterial, index)
+	end
+
+	client:EmitSound(path)
 	return true
 end
 

@@ -1,4 +1,40 @@
 
+-- The walking player's own footstep sound comes from a client-side movement
+-- prediction path the engine handles internally - it isn't actually gated
+-- by the PlayerFootstep Lua hook's return value (that hook only reliably
+-- controls what OTHER players hear about you). Since Schema:PlayerFootstep
+-- (sv_hooks.lua) now always networks an explicit raw footstep sound to
+-- everyone, including the walker, the only way to stop the engine's own
+-- local copy from playing alongside it is to mute the underlying stock
+-- GameSound scripts directly. If a surface still plays a default sound on
+-- top of ours, the material's stock name is probably missing from this
+-- list - tell me which surface and I'll add it.
+local FOOTSTEP_MUTE_NAMES = {
+	"Player.FootstepConcrete",
+	"Player.FootstepDirt",
+	"Player.FootstepGrass",
+	"Player.FootstepGravel",
+	"Player.FootstepLadder",
+	"Player.FootstepMetal",
+	"Player.FootstepSand",
+	"Player.FootstepSlosh",
+	"Player.FootstepSnow",
+	"Player.FootstepTile",
+	"Player.FootstepWade",
+	"Player.FootstepWood"
+}
+
+for _, name in ipairs(FOOTSTEP_MUTE_NAMES) do
+	sound.Add({
+		name = name,
+		channel = CHAN_STATIC,
+		volume = 0,
+		level = 20,
+		pitch = 100,
+		sound = "common/null.wav"
+	})
+end
+
 function Schema:PopulateCharacterInfo(client, character, tooltip)
 	if (client:IsRestricted()) then
 		local panel = tooltip:AddRowAfter("name", "ziptie")
