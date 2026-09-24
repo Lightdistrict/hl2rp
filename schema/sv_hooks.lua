@@ -286,45 +286,77 @@ function Schema:OnNPCKilled(npc, attacker, inflictor)
 	end
 end
 
+function Schema:PlayVoiceInfo(speaker, chatType, info)
+	if (!info.sound) then
+		return
+	end
+
+	local volume = 80
+
+	if (chatType == "w") then
+		volume = 60
+	elseif (chatType == "y") then
+		volume = 150
+	end
+
+	-- info.sound can be a single path, or a table of paths to pick a random one from
+	-- each time (e.g. several taunt/reload/idle variants registered under one key)
+	local sound = istable(info.sound) and info.sound[math.random(#info.sound)] or info.sound
+
+	if (info.global) then
+		netstream.Start(nil, "PlaySound", sound)
+	else
+		local sounds = {sound}
+
+		if (speaker:IsCombine()) then
+			speaker.bTypingBeep = nil
+			sounds[#sounds + 1] = "NPC_MetroPolice.Radio.Off"
+		end
+
+		ix.util.EmitQueuedSounds(speaker, sounds, nil, nil, volume)
+	end
+end
+
 function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers, rawText)
 	if (chatType == "ic" or chatType == "w" or chatType == "y" or chatType == "dispatch") then
 		local class = self.voices.GetClass(speaker)
 
+		-- exact match: the whole message is a voice command (e.g. "10-4"), which
+		-- replaces the sent text with the phrase's own formatted line
 		for k, v in ipairs(class) do
 			local info = self.voices.Get(v, rawText)
 
 			if (info) then
-				local volume = 80
-
-				if (chatType == "w") then
-					volume = 60
-				elseif (chatType == "y") then
-					volume = 150
-				end
-
-				if (info.sound) then
-					-- info.sound can be a single path, or a table of paths to pick a random one from
-					-- each time (e.g. several taunt/reload/idle variants registered under one key)
-					local sound = istable(info.sound) and info.sound[math.random(#info.sound)] or info.sound
-
-					if (info.global) then
-						netstream.Start(nil, "PlaySound", sound)
-					else
-						local sounds = {sound}
-
-						if (speaker:IsCombine()) then
-							speaker.bTypingBeep = nil
-							sounds[#sounds + 1] = "NPC_MetroPolice.Radio.Off"
-						end
-
-						ix.util.EmitQueuedSounds(speaker, sounds, nil, nil, volume)
-					end
-				end
+				self:PlayVoiceInfo(speaker, chatType, info)
 
 				if (speaker:IsCombine()) then
 					return string.format("<:: %s ::>", info.text)
 				else
 					return info.text
+				end
+			end
+		end
+
+		-- no exact command - if any word in the message matches one of the speaker's
+		-- voice keys, still play that line, but leave the sent message exactly as
+		-- typed (e.g. "Safeman, move up!" plays the "safeman" callout without
+		-- replacing the chat text)
+		for k, v in ipairs(class) do
+			local stored = self.voices.stored[v]
+
+			if (stored) then
+				for word in rawText:lower():gmatch("%a+") do
+					local info = stored[word]
+
+					if (info) then
+						self:PlayVoiceInfo(speaker, chatType, info)
+
+						if (speaker:IsCombine()) then
+							return string.format("<:: %s ::>", text)
+						end
+
+						return
+					end
 				end
 			end
 		end
