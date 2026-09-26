@@ -277,7 +277,7 @@ function Schema:PopulateHelpMenu(tabs)
 			categoryLabel:SizeToContents()
 			category:SizeToChildren(true, true)
 
-			for command, info in SortedPairs(self.voices.stored[class]) do
+			for command, info in SortedPairs(self.voices.stored[class] or {}) do
 				local title = container:Add("DLabel")
 				title:SetFont("ixMediumLightFont")
 				title:SetText(command:upper())
