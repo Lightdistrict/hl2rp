@@ -398,7 +398,13 @@ Schema.voices.Add("Dispatch", "UNREST PROCEDURE", "Attention, community: Unrest 
 Schema.voices.Add("Dispatch", "UNREST STRUCTURE", "Alert, community ground-protection units, local unrest structure detected. ASSEMBLE, ADMINISTER, PACIFY.", "npc/overwatch/cityvoice/f_localunrest_spkr.wav", true)
 
 Schema.voices.AddClass("MPF", function(client)
-	return client:Team() == FACTION_MPF
+	if (client:Team() == FACTION_MPF) then return true end
+
+	local character = client:GetCharacter()
+	if (!character) then return false end
+
+	local class = character:GetClass()
+	return class == CLASS_OTA_SOLDIER or class == CLASS_OTA_SHOTGUNNER or class == CLASS_OTA_ELITE
 end)
 
 Schema.voices.AddClass("Dispatch", function(client)
