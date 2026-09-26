@@ -261,7 +261,7 @@ function Schema:PlayerFootstep(client, position, foot, soundName, volume)
 
 	local path
 
-	if (folder and FOOTSTEP_MATERIAL_COUNTS[material]) then
+	if (folder and FOOTSTEP_MATERIAL_COUNTS[material] and client:IsRunning()) then
 		local count = FOOTSTEP_MATERIAL_COUNTS[material]
 		local index = (client.ixFootstepIndex[material] or 0) % count + 1
 		client.ixFootstepIndex[material] = index
@@ -270,9 +270,9 @@ function Schema:PlayerFootstep(client, position, foot, soundName, volume)
 
 		path = string.format("footsteps/%s/%s.wav", folder, fileName)
 	else
-		-- no custom pack for this faction/material - fall back to the stock
-		-- HL2 footstep files instead of the named GameSound, since those are
-		-- muted client-side to stop the engine's own local-prediction
+		-- walking (or no custom pack for this faction/material) - fall back to
+		-- the stock HL2 footstep files instead of the named GameSound, since
+		-- those are muted client-side to stop the engine's own local-prediction
 		-- footstep sound from doubling up with ours (see cl_hooks.lua)
 		local stockMaterial = FOOTSTEP_STOCK_MATERIAL[material] or material
 		local index = (client.ixFootstepIndex[stockMaterial] or 0) % 4 + 1
