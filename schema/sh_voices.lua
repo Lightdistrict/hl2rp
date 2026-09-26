@@ -397,6 +397,17 @@ Schema.voices.Add("Dispatch", "UNIDENTIFIED", "Attention, please: Unidentified p
 Schema.voices.Add("Dispatch", "UNREST PROCEDURE", "Attention, community: Unrest procedure code is now in effect. INNOCULATE, SHIELD, PACIFY. Code: PRESSURE, SWORD, STERILIZE.", "npc/overwatch/cityvoice/f_unrestprocedure1_spkr.wav", true)
 Schema.voices.Add("Dispatch", "UNREST STRUCTURE", "Alert, community ground-protection units, local unrest structure detected. ASSEMBLE, ADMINISTER, PACIFY.", "npc/overwatch/cityvoice/f_localunrest_spkr.wav", true)
 
+Schema.voices.Add("MPF", "cantcomply", "Can't comply.", "vo/metro_police/cantcomply.wav")
+Schema.voices.Add("MPF", "deny", "Deny.", "vo/metro_police/deny.wav")
+Schema.voices.Add("MPF", "housingblock", "Housing block.", "vo/metro_police/housingblock.wav")
+Schema.voices.Add("MPF", "negative", "Negative.", {"vo/metro_police/negative1.wav", "vo/metro_police/negative2.wav"})
+Schema.voices.Add("MPF", "negatory", "Negatory.", {"vo/metro_police/negatory1.wav", "vo/metro_police/negatory2.wav"})
+Schema.voices.Add("MPF", "onthewall", "On the wall.", {"vo/metro_police/onthewall1.wav", "vo/metro_police/onthewall2.wav"})
+Schema.voices.Add("MPF", "precinct", "Precinct.", "vo/metro_police/precinct.wav")
+Schema.voices.Add("MPF", "putyourhandsup", "Put your hands up!", "vo/metro_police/putyourhandsup.wav")
+Schema.voices.Add("MPF", "thatsnegative", "That's a negative.", "vo/metro_police/thatsnegative.wav")
+Schema.voices.Add("MPF", "uhhnocando", "Uhh, no can do.", "vo/metro_police/uhhnocando.wav")
+
 Schema.voices.AddClass("MPF", function(client)
 	if (client:Team() == FACTION_MPF) then return true end
 
