@@ -233,9 +233,19 @@ local FOOTSTEP_STOCK_MATERIAL = {
 function Schema:PlayerFootstep(client, position, foot, soundName, volume)
 	local factionTable = ix.faction.Get(client:Team())
 
-	if (factionTable.runSounds and client:IsRunning()) then
-		client:EmitSound(factionTable.runSounds[foot])
-		return true
+	if (client:IsRunning()) then
+		local runPack = self.footstepRunPacks[client:Team()]
+
+		if (runPack) then
+			local index = (client.ixRunFootstepIndex or 0) % runPack.count + 1
+			client.ixRunFootstepIndex = index
+
+			client:EmitSound(string.format("foley/%s/%s%d.wav", runPack.folder, runPack.prefix, index))
+			return true
+		elseif (factionTable.runSounds) then
+			client:EmitSound(factionTable.runSounds[foot])
+			return true
+		end
 	end
 
 	local material = self:GetFootstepMaterial(position)
