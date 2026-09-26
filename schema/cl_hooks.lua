@@ -21,7 +21,13 @@ local FOOTSTEP_MUTE_NAMES = {
 	"Player.FootstepSnow",
 	"Player.FootstepTile",
 	"Player.FootstepWade",
-	"Player.FootstepWood"
+	"Player.FootstepWood",
+	-- MPF's running sound overlap isn't the material-based prediction above -
+	-- these are baked into the metrocop model's own footstep animation
+	-- events, which fire independently of the PlayerFootstep hook entirely,
+	-- so they play alongside our custom run pack unless muted the same way.
+	"NPC_MetroPolice.RunFootstepLeft",
+	"NPC_MetroPolice.RunFootstepRight"
 }
 
 for _, name in ipairs(FOOTSTEP_MUTE_NAMES) do
