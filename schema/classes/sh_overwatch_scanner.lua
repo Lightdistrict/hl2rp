@@ -1,6 +1,7 @@
 CLASS.name = "Scanner"
 CLASS.description = "A Combine scanner drone, an extension of Overwatch's surveillance network."
 CLASS.faction = FACTION_OVERWATCH
+CLASS.isDefault = true
 
 function CLASS:CanSwitchTo(client)
 	return client:IsSuperAdmin()
