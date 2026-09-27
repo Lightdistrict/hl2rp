@@ -42,3 +42,15 @@ function Schema.voices.GetClass(client)
 
 	return classes
 end
+
+-- Compares a character's class by its stable uniqueID (the class file's
+-- name) instead of its numeric index, since that index is just the class's
+-- position in an alphabetical file list and silently shifts for every class
+-- that loads after it whenever a class file is added or removed.
+function Schema.voices.CharacterHasClass(character, uniqueID)
+	if (!character) then return false end
+
+	local info = ix.class.Get(character:GetClass())
+
+	return info != nil and info.uniqueID == uniqueID
+end

@@ -183,7 +183,9 @@ function Schema:CreateScanner(client, class)
 	end)
 
 	timer.Create(uniqueID, 0.33, 0, function()
-		if (!IsValid(client) or !IsValid(entity) or client:GetCharacter():GetID() != entity.ixCharacterID) then
+		local character = IsValid(client) and client:GetCharacter()
+
+		if (!IsValid(client) or !IsValid(entity) or !character or character:GetID() != entity.ixCharacterID) then
 			if (IsValid(entity)) then
 				entity:Remove()
 			end

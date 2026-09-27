@@ -16,36 +16,29 @@
 ]]
 
 Schema.voices.AddClass("OTA_Grunt", function(client)
-	local character = client:GetCharacter()
-	return character and character:GetClass() == CLASS_OTA_GRUNT
+	return Schema.voices.CharacterHasClass(client:GetCharacter(), "ota_grunt")
 end)
 
 Schema.voices.AddClass("OTA_Soldier", function(client)
-	local character = client:GetCharacter()
-	return character and character:GetClass() == CLASS_OTA_SOLDIER
+	return Schema.voices.CharacterHasClass(client:GetCharacter(), "ota_soldier")
 end)
 
 Schema.voices.AddClass("OTA_Shotgunner", function(client)
-	local character = client:GetCharacter()
-	return character and character:GetClass() == CLASS_OTA_SHOTGUNNER
+	return Schema.voices.CharacterHasClass(client:GetCharacter(), "ota_shotgunner")
 end)
 
 Schema.voices.AddClass("OTA_Suppressor", function(client)
-	local character = client:GetCharacter()
-	return character and character:GetClass() == CLASS_OTA_SUPPRESSOR
+	return Schema.voices.CharacterHasClass(client:GetCharacter(), "ota_suppressor")
 end)
 
 Schema.voices.AddClass("OTA_Heavy", function(client)
-	local character = client:GetCharacter()
-	return character and character:GetClass() == CLASS_OTA_HEAVY
+	return Schema.voices.CharacterHasClass(client:GetCharacter(), "ota_heavy")
 end)
 
 Schema.voices.AddClass("OTA_Ordinal", function(client)
-	local character = client:GetCharacter()
-	return character and character:GetClass() == CLASS_OTA_ORDINAL
+	return Schema.voices.CharacterHasClass(client:GetCharacter(), "ota_ordinal")
 end)
 
 Schema.voices.AddClass("OTA_Elite", function(client)
-	local character = client:GetCharacter()
-	return character and character:GetClass() == CLASS_OTA_ELITE
+	return Schema.voices.CharacterHasClass(client:GetCharacter(), "ota_elite")
 end)

@@ -412,10 +412,9 @@ Schema.voices.AddClass("MPF", function(client)
 	if (client:Team() == FACTION_MPF) then return true end
 
 	local character = client:GetCharacter()
-	if (!character) then return false end
-
-	local class = character:GetClass()
-	return class == CLASS_OTA_SOLDIER or class == CLASS_OTA_SHOTGUNNER or class == CLASS_OTA_ELITE
+	return Schema.voices.CharacterHasClass(character, "ota_soldier")
+		or Schema.voices.CharacterHasClass(character, "ota_shotgunner")
+		or Schema.voices.CharacterHasClass(character, "ota_elite")
 end)
 
 Schema.voices.AddClass("Dispatch", function(client)
@@ -452,8 +451,7 @@ Schema.voices.Add("Scanner", "RESPONSE TEAMS", "Response teams have been dispatc
 Schema.voices.Add("Scanner", "UPDATE CODE FLUSH", "Update code flush is now in effect for this sector.", "npc/overwatch/citywide/overwatch_updatecodeflush.wav", true)
 
 Schema.voices.AddClass("Scanner", function(client)
-	local character = client:GetCharacter()
-	return character and character:GetClass() == CLASS_OVERWATCH_SCANNER
+	return Schema.voices.CharacterHasClass(client:GetCharacter(), "overwatch_scanner")
 end)
 -- Auto-generated from a transcribed file listing - display "text" values are
 -- best-guess placeholders (no actual transcript was available), review/edit freely.
