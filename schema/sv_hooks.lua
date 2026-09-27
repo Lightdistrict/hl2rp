@@ -458,7 +458,7 @@ function Schema:PlayVoiceInfo(speaker, chatType, info)
 end
 
 function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers, rawText)
-	if (chatType == "ic" or chatType == "w" or chatType == "y" or chatType == "dispatch" or chatType == "overwatch") then
+	if (chatType == "ic" or chatType == "w" or chatType == "y" or chatType == "dispatch" or chatType == "dispatchbroadcast") then
 		local class = self.voices.GetClass(speaker)
 
 		-- exact match: the whole message is a voice command (e.g. "10-4"), which

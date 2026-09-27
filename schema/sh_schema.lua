@@ -159,7 +159,7 @@ do
 		chat.AddText(self.color, string.format(self.format, text))
 	end
 
-	ix.chat.Register("overwatch", CLASS)
+	ix.chat.Register("dispatchbroadcast", CLASS)
 end
 
 -- Combine-only - only OTA/Overwatch/MPF see the text or hear the audio
@@ -187,6 +187,64 @@ do
 	end
 
 	ix.chat.Register("dispatch", CLASS)
+end
+
+-- 4-channel combine radio - channel/faction eligibility lives in
+-- Schema.radioChannels (schema/sh_hooks.lua). data.channel is set by the
+-- Radiochannel command below to whichever channel the sender's radio item
+-- is currently set to.
+do
+	local CLASS = {}
+	CLASS.color = Color(80, 130, 255)
+
+	function CLASS:CanSay(speaker, text, data)
+		local info = Schema.radioChannels[data and data.channel]
+
+		if (!info) then
+			return false
+		end
+
+		if (info.factions and !table.HasValue(info.factions, speaker:Team())) then
+			speaker:NotifyLocalized("notAllowed")
+
+			return false
+		end
+	end
+
+	function CLASS:CanHear(speaker, listener, data)
+		local info = Schema.radioChannels[data and data.channel]
+
+		if (!info) then
+			return false
+		end
+
+		if (info.factions and !table.HasValue(info.factions, listener:Team())) then
+			return false
+		end
+
+		local character = listener:GetCharacter()
+
+		if (!character) then
+			return false
+		end
+
+		for _, v in ipairs(character:GetInventory():GetItemsByUniqueID("combine_radio", true)) do
+			if (v:GetData("enabled", false) and v:GetData("channel", 1) == data.channel) then
+				return true
+			end
+		end
+
+		return false
+	end
+
+	function CLASS:OnChatAdd(speaker, text, bAnonymous, data)
+		local info = Schema.radioChannels[data and data.channel]
+		local channelName = info and info.name or "unknown"
+
+		chat.AddText(self.color, string.format("%s radios in %s: \"%s\"", speaker:Name(), channelName, text))
+	end
+
+	ix.chat.Register("radiochannel", CLASS)
 end
 
 do

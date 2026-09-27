@@ -76,3 +76,13 @@ function Schema:RegisterRunFootstepFaction(factionID, folder, prefix, count)
 end
 
 Schema:RegisterRunFootstepFaction(FACTION_MPF, "metrocop", "metrocop_foley_step_", 9)
+
+-- The 4-channel combine radio (schema/items/sh_combine_radio.lua). "factions"
+-- nil means everyone can send/hear it; otherwise it's a whitelist. Names are
+-- just what's shown in chat ("<name> radios in <name>: ...") - rename freely.
+Schema.radioChannels = {
+	[1] = {name = "tac", factions = nil},
+	[2] = {name = "command", factions = {FACTION_MPF, FACTION_OVERWATCH, FACTION_OTA}},
+	[3] = {name = "field", factions = {FACTION_OTA, FACTION_OVERWATCH}},
+	[4] = {name = "overwatch", factions = {FACTION_OVERWATCH}}
+}
