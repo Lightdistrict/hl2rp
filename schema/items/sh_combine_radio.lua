@@ -1,6 +1,6 @@
 
 ITEM.name = "Combine Radio"
-ITEM.model = Model("models/deadbodies/dead_male_civilian_radio.mdl")
+ITEM.model = Model("models/gibs/shield_scanner_gib1.mdl")
 ITEM.description = "A radio with 4 fixed channels.\nIt is currently turned %s, set to channel %d (%s)."
 ITEM.cost = 50
 
@@ -28,7 +28,16 @@ end
 
 ITEM.functions.Toggle = {
 	OnRun = function(itemTable)
-		itemTable:SetData("enabled", !itemTable:GetData("enabled", false))
+		local enabled = !itemTable:GetData("enabled", false)
+
+		itemTable:SetData("enabled", enabled)
+
+		-- always come on tuned to the everyone-channel, regardless of what
+		-- it was last left on
+		if (enabled) then
+			itemTable:SetData("channel", 1)
+		end
+
 		itemTable.player:EmitSound("buttons/lever7.wav", 50, math.random(170, 180), 0.25)
 
 		return false
@@ -37,11 +46,18 @@ ITEM.functions.Toggle = {
 
 ITEM.functions.Channel = {
 	OnRun = function(itemTable)
-		local channel = (itemTable:GetData("channel", 1) % 4) + 1
-		local info = Schema.radioChannels[channel]
+		local client = itemTable.player
+		local nextChannel = (itemTable:GetData("channel", 1) % 4) + 1
+		local info = Schema.radioChannels[nextChannel]
 
-		itemTable:SetData("channel", channel)
-		itemTable.player:Notify(string.format("Radio set to channel %d (%s).", channel, info and info.name or "unknown"))
+		if (info and info.factions and !table.HasValue(info.factions, client:Team())) then
+			client:Notify("You cannot switch to this channel.")
+
+			return false
+		end
+
+		itemTable:SetData("channel", nextChannel)
+		client:Notify(string.format("Radio set to channel %d (%s).", nextChannel, info and info.name or "unknown"))
 
 		return false
 	end

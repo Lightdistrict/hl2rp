@@ -28,9 +28,15 @@ do
 	ix.command.Add("Dispatchbroadcast", COMMAND)
 end
 
+-- /radio (alias /r) - talks on whichever channel the speaker's Combine
+-- Radio is currently tuned to (see schema/items/sh_combine_radio.lua and
+-- Schema.radioChannels in sh_hooks.lua). This replaces the old frequency-
+-- based handheld_radio command; that item/chat classes are untouched, just
+-- no longer reachable by a slash command.
 do
 	local COMMAND = {}
 	COMMAND.arguments = ix.type.text
+	COMMAND.alias = "R"
 
 	function COMMAND:OnRun(client, message)
 		local character = client:GetCharacter()
@@ -57,39 +63,6 @@ do
 			end
 
 			ix.chat.Send(client, "radiochannel", message, false, nil, {channel = channel})
-		elseif (#radios > 0) then
-			return "@radioNotOn"
-		else
-			return "@radioRequired"
-		end
-	end
-
-	ix.command.Add("Radiochannel", COMMAND)
-end
-
-do
-	local COMMAND = {}
-	COMMAND.arguments = ix.type.text
-
-	function COMMAND:OnRun(client, message)
-		local character = client:GetCharacter()
-		local radios = character:GetInventory():GetItemsByUniqueID("handheld_radio", true)
-		local item
-
-		for k, v in ipairs(radios) do
-			if (v:GetData("enabled", false)) then
-				item = v
-				break
-			end
-		end
-
-		if (item) then
-			if (!client:IsRestricted()) then
-				ix.chat.Send(client, "radio", message)
-				ix.chat.Send(client, "radio_eavesdrop", message)
-			else
-				return "@notNow"
-			end
 		elseif (#radios > 0) then
 			return "@radioNotOn"
 		else
