@@ -313,6 +313,18 @@ netstream.Hook("CombineDisplayMessage", function(text, color, arguments)
 	end
 end)
 
+-- some voice packs are actually MP3 data saved with a .wav extension, which
+-- EmitSound/surface.PlaySound can't decode - sound.PlayFile uses GMod's
+-- BASS-based audio system instead, which handles MP3 fine. The parameter is
+-- deliberately not named "sound" - that would shadow the sound.* library.
+netstream.Hook("PlaySound", function(soundPath)
+	sound.PlayFile("sound/"..soundPath, "noplay", function(station, errorID, errorName)
+		if (IsValid(station)) then
+			station:Play()
+		end
+	end)
+end)
+
 netstream.Hook("Frequency", function(oldFrequency)
 	Derma_StringRequest("Frequency", "What would you like to set the frequency to?", oldFrequency, function(text)
 		ix.command.Send("SetFreq", text)

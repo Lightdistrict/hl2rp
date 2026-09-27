@@ -421,13 +421,13 @@ function Schema:PlayVoiceInfo(speaker, chatType, info)
 	local sound = istable(info.sound) and info.sound[math.random(#info.sound)] or info.sound
 
 	if (info.global) then
-		-- broadcast citywide by emitting from every player directly (distance
-		-- to the listener is then always ~0, so it plays at full volume for
-		-- everyone) instead of routing through netstream/client-side
-		-- playback, which silently failed to play these files at all
-		for _, ply in ipairs(player.GetAll()) do
-			ply:EmitSound(sound)
-		end
+		-- some global voice packs (e.g. the Scanner citywide announcements)
+		-- are actually MP3 data saved with a .wav extension - Source's
+		-- classic sound system (EmitSound/surface.PlaySound) only decodes
+		-- real WAV/PCM and silently plays nothing for those, so this has to
+		-- go through GMod's BASS-based client audio system instead, which
+		-- can actually decode MP3.
+		netstream.Start(nil, "PlaySound", sound)
 	else
 		local sounds = {sound}
 
