@@ -46,6 +46,13 @@ ITEM.functions.Toggle = {
 
 local function SwitchChannel(itemTable, nextChannel)
 	local client = itemTable.player
+
+	if (!itemTable:GetData("enabled", false)) then
+		client:Notify("Turn your radio on first.")
+
+		return false
+	end
+
 	local info = Schema.radioChannels[nextChannel]
 
 	if (info and info.factions and !table.HasValue(info.factions, client:Team())) then
@@ -62,6 +69,9 @@ end
 
 ITEM.functions.ChannelUp = {
 	name = "Channel Up",
+	OnCanRun = function(item)
+		return item:GetData("enabled", false)
+	end,
 	OnRun = function(itemTable)
 		return SwitchChannel(itemTable, (itemTable:GetData("channel", 1) % 4) + 1)
 	end
@@ -69,6 +79,9 @@ ITEM.functions.ChannelUp = {
 
 ITEM.functions.ChannelDown = {
 	name = "Channel Down",
+	OnCanRun = function(item)
+		return item:GetData("enabled", false)
+	end,
 	OnRun = function(itemTable)
 		return SwitchChannel(itemTable, ((itemTable:GetData("channel", 1) + 2) % 4) + 1)
 	end
