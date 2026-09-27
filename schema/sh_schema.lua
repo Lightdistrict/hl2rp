@@ -141,6 +141,7 @@ function Schema:IsCombineRank(text, rank)
 	return string.find(text, "[%D+]"..rank.."[%D+]")
 end
 
+-- citywide - everyone hears/sees it, regardless of faction
 do
 	local CLASS = {}
 	CLASS.color = Color(255, 0, 0)
@@ -152,6 +153,33 @@ do
 
 			return false
 		end
+	end
+
+	function CLASS:OnChatAdd(speaker, text)
+		chat.AddText(self.color, string.format(self.format, text))
+	end
+
+	ix.chat.Register("overwatch", CLASS)
+end
+
+-- Combine-only - only OTA/Overwatch/MPF see the text or hear the audio
+do
+	local CLASS = {}
+	CLASS.color = Color(255, 0, 0)
+	CLASS.format = "Dispatch : \"%s\""
+
+	function CLASS:CanSay(speaker, text)
+		if (!speaker:IsDispatch()) then
+			speaker:NotifyLocalized("notAllowed")
+
+			return false
+		end
+	end
+
+	function CLASS:CanHear(speaker, listener)
+		local team = listener:Team()
+
+		return team == FACTION_OTA or team == FACTION_OVERWATCH or team == FACTION_MPF
 	end
 
 	function CLASS:OnChatAdd(speaker, text)

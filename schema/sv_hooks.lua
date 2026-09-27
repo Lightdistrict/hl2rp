@@ -434,6 +434,17 @@ function Schema:PlayVoiceInfo(speaker, chatType, info)
 		-- go through GMod's BASS-based client audio system instead, which
 		-- can actually decode MP3.
 		netstream.Start(nil, "PlaySound", sound)
+	elseif (chatType == "dispatch") then
+		-- /dispatch's audio should only reach the same audience as its chat
+		-- text (OTA/Overwatch/MPF) - EmitQueuedSounds has no recipient
+		-- filter, so emit it from every qualifying player directly instead
+		for _, ply in ipairs(player.GetAll()) do
+			local team = ply:Team()
+
+			if (team == FACTION_OTA or team == FACTION_OVERWATCH or team == FACTION_MPF) then
+				ply:EmitSound(sound)
+			end
+		end
 	else
 		local sounds = {sound}
 
@@ -447,7 +458,7 @@ function Schema:PlayVoiceInfo(speaker, chatType, info)
 end
 
 function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers, rawText)
-	if (chatType == "ic" or chatType == "w" or chatType == "y" or chatType == "dispatch") then
+	if (chatType == "ic" or chatType == "w" or chatType == "y" or chatType == "dispatch" or chatType == "overwatch") then
 		local class = self.voices.GetClass(speaker)
 
 		-- exact match: the whole message is a voice command (e.g. "10-4"), which
@@ -462,6 +473,32 @@ function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers,
 					return string.format("<:: %s ::>", info.text)
 				else
 					return info.text
+				end
+			end
+		end
+
+		-- /dispatch only: "<key> <free text>" - the key's own phrase is
+		-- prefixed onto whatever the speaker typed after it, e.g.
+		-- "radio_escort all administrators to zone" plays the "radio_escort"
+		-- line's sound and sends "Escort all administrators to zone"
+		if (chatType == "dispatch") then
+			local firstWord, rest = rawText:match("^(%S+)%s+(.+)$")
+
+			if (firstWord) then
+				for k, v in ipairs(class) do
+					local info = self.voices.Get(v, firstWord)
+
+					if (info) then
+						self:PlayVoiceInfo(speaker, chatType, info)
+
+						local combined = string.format("%s %s", info.text, rest)
+
+						if (speaker:IsCombine()) then
+							return string.format("<:: %s ::>", combined)
+						else
+							return combined
+						end
+					end
 				end
 			end
 		end
