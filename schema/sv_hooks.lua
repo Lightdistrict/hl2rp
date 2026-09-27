@@ -142,6 +142,12 @@ function Schema:PlayerLoadedCharacter(client, character, oldCharacter)
 		end
 
 		self:UpdateOTAName(character)
+	elseif (faction == FACTION_OVERWATCH and character:GetClass() == CLASS_OVERWATCH_SCANNER) then
+		if (!character:GetData("scannerCallsign")) then
+			character:SetData("scannerCallsign", self:ZeroNumber(math.random(0, 999), 3))
+		end
+
+		self:UpdateScannerName(character)
 	end
 end
 

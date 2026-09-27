@@ -134,6 +134,18 @@ if (SERVER) then
 		character:SetName(word .. " " .. number)
 	end
 
+	--- Sets an Overwatch Scanner character's display name to "AW:SCN:<number>".
+	-- @realm server
+	function Schema:UpdateScannerName(character)
+		local number = character:GetData("scannerCallsign")
+
+		if (!number) then
+			return
+		end
+
+		character:SetName("AW:SCN:" .. number)
+	end
+
 	--- Adds (or removes, with a negative amount) civic points on a character, then checks for a promotion.
 	-- @realm server
 	function Schema:AddCivicPoints(character, amount)

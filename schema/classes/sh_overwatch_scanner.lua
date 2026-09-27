@@ -10,12 +10,19 @@ end
 -- Scanners are anonymous - give them a callsign-style name (e.g. "AW:SCN:482")
 -- instead of whatever their character was previously named, matching the
 -- "SCN" rank-code IsDispatch() already looks for, which is how Scanner
--- qualifies for the global dispatch chat/voice-line channel.
+-- qualifies for the global dispatch chat/voice-line channel. This is also
+-- applied from Schema:PlayerLoadedCharacter (sv_hooks.lua), since a
+-- freshly-loaded character that defaults into Scanner gets its class set
+-- directly and never runs OnSet at all.
 function CLASS:OnSet(client)
 	local character = client:GetCharacter()
 
 	if (character) then
-		character:SetName(string.format("AW:SCN:%s", Schema:ZeroNumber(math.random(0, 999), 3)))
+		if (!character:GetData("scannerCallsign")) then
+			character:SetData("scannerCallsign", Schema:ZeroNumber(math.random(0, 999), 3))
+		end
+
+		Schema:UpdateScannerName(character)
 	end
 end
 
