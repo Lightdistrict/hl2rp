@@ -212,6 +212,14 @@ do
 	end
 
 	function CLASS:CanHear(speaker, listener, data)
+		local character = listener:GetCharacter()
+
+		-- Scanner is Overwatch's surveillance network - it monitors every
+		-- channel regardless of what its own radio (if any) is tuned to
+		if (character and Schema.voices.CharacterHasClass(character, "overwatch_scanner")) then
+			return true
+		end
+
 		local info = Schema.radioChannels[data and data.channel]
 
 		if (!info) then
@@ -221,8 +229,6 @@ do
 		if (info.factions and !table.HasValue(info.factions, listener:Team())) then
 			return false
 		end
-
-		local character = listener:GetCharacter()
 
 		if (!character) then
 			return false

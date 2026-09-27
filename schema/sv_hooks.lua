@@ -426,25 +426,62 @@ function Schema:PlayVoiceInfo(speaker, chatType, info)
 	-- each time (e.g. several taunt/reload/idle variants registered under one key)
 	local sound = istable(info.sound) and info.sound[math.random(#info.sound)] or info.sound
 
+	-- Some voice packs are real MP3 files (or, previously, MP3 data saved
+	-- with a .wav extension) - Source's classic sound system (EmitSound/
+	-- surface.PlaySound) only decodes real WAV/PCM and silently plays
+	-- nothing for those, so any .mp3 has to go through GMod's BASS-based
+	-- client audio system (sound.PlayFile) instead, which can decode MP3.
+	local isMP3 = sound:lower():find("%.mp3$") != nil
+
 	if (info.global) then
-		-- some global voice packs (e.g. the Scanner citywide announcements)
-		-- are actually MP3 data saved with a .wav extension - Source's
-		-- classic sound system (EmitSound/surface.PlaySound) only decodes
-		-- real WAV/PCM and silently plays nothing for those, so this has to
-		-- go through GMod's BASS-based client audio system instead, which
-		-- can actually decode MP3.
-		netstream.Start(nil, "PlaySound", sound)
+		-- citywide - everyone hears it
+		if (isMP3) then
+			netstream.Start(nil, "PlaySound", sound)
+		else
+			for _, ply in ipairs(player.GetAll()) do
+				ply:EmitSound(sound)
+			end
+		end
 	elseif (chatType == "dispatch") then
 		-- /dispatch's audio should only reach the same audience as its chat
-		-- text (OTA/Overwatch/MPF) - EmitQueuedSounds has no recipient
-		-- filter, so emit it from every qualifying player directly instead
+		-- text (OTA/Overwatch/MPF)
+		local recipients = {}
+
 		for _, ply in ipairs(player.GetAll()) do
 			local team = ply:Team()
 
 			if (team == FACTION_OTA or team == FACTION_OVERWATCH or team == FACTION_MPF) then
+				recipients[#recipients + 1] = ply
+			end
+		end
+
+		if (isMP3) then
+			netstream.Start(recipients, "PlaySound", sound)
+		else
+			for _, ply in ipairs(recipients) do
 				ply:EmitSound(sound)
 			end
 		end
+	elseif (isMP3) then
+		-- normal ic/w/y - sound.PlayFile has no distance falloff, so
+		-- approximate "nearby" using the same range the chat text itself uses
+		local range = ix.config.Get("chatRange", 280)
+
+		if (chatType == "w") then
+			range = range * 0.25
+		elseif (chatType == "y") then
+			range = range * 2
+		end
+
+		local recipients = {}
+
+		for _, ply in ipairs(player.GetAll()) do
+			if ((ply:GetPos() - speaker:GetPos()):LengthSqr() <= (range * range)) then
+				recipients[#recipients + 1] = ply
+			end
+		end
+
+		netstream.Start(recipients, "PlaySound", sound)
 	else
 		local sounds = {sound}
 
