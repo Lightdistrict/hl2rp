@@ -63,10 +63,10 @@ end
 local COMMAND_PREFIX = "/"
 
 function Schema:ChatTextChanged(text)
-	if (LocalPlayer():IsCombine()) then
+	if (LocalPlayer():IsCombine() or LocalPlayer():Team() == FACTION_OVERWATCH) then
 		local key = nil
 
-		if (text == COMMAND_PREFIX .. "radio ") then
+		if (text == COMMAND_PREFIX .. "radio " or text == COMMAND_PREFIX .. "r ") then
 			key = "r"
 		elseif (text == COMMAND_PREFIX .. "w ") then
 			key = "w"

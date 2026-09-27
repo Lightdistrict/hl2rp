@@ -44,21 +44,32 @@ ITEM.functions.Toggle = {
 	end
 }
 
-ITEM.functions.Channel = {
-	OnRun = function(itemTable)
-		local client = itemTable.player
-		local nextChannel = (itemTable:GetData("channel", 1) % 4) + 1
-		local info = Schema.radioChannels[nextChannel]
+local function SwitchChannel(itemTable, nextChannel)
+	local client = itemTable.player
+	local info = Schema.radioChannels[nextChannel]
 
-		if (info and info.factions and !table.HasValue(info.factions, client:Team())) then
-			client:Notify("You cannot switch to this channel.")
-
-			return false
-		end
-
-		itemTable:SetData("channel", nextChannel)
-		client:Notify(string.format("Radio set to channel %d (%s).", nextChannel, info and info.name or "unknown"))
+	if (info and info.factions and !table.HasValue(info.factions, client:Team())) then
+		client:Notify("You cannot switch to this channel.")
 
 		return false
+	end
+
+	itemTable:SetData("channel", nextChannel)
+	client:Notify(string.format("Radio set to channel %d (%s).", nextChannel, info and info.name or "unknown"))
+
+	return false
+end
+
+ITEM.functions.ChannelUp = {
+	name = "Channel Up",
+	OnRun = function(itemTable)
+		return SwitchChannel(itemTable, (itemTable:GetData("channel", 1) % 4) + 1)
+	end
+}
+
+ITEM.functions.ChannelDown = {
+	name = "Channel Down",
+	OnRun = function(itemTable)
+		return SwitchChannel(itemTable, ((itemTable:GetData("channel", 1) + 2) % 4) + 1)
 	end
 }

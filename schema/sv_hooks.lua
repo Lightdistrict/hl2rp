@@ -628,7 +628,7 @@ function Schema:PlayerSpray(client)
 end
 
 netstream.Hook("PlayerChatTextChanged", function(client, key)
-	if (client:IsCombine() and !client.bTypingBeep
+	if ((client:IsCombine() or client:Team() == FACTION_OVERWATCH) and !client.bTypingBeep
 	and (key == "y" or key == "w" or key == "r" or key == "t")) then
 		client:EmitSound("NPC_MetroPolice.Radio.On")
 		client.bTypingBeep = true
@@ -636,7 +636,7 @@ netstream.Hook("PlayerChatTextChanged", function(client, key)
 end)
 
 netstream.Hook("PlayerFinishChat", function(client)
-	if (client:IsCombine() and client.bTypingBeep) then
+	if ((client:IsCombine() or client:Team() == FACTION_OVERWATCH) and client.bTypingBeep) then
 		client:EmitSound("NPC_MetroPolice.Radio.Off")
 		client.bTypingBeep = nil
 	end

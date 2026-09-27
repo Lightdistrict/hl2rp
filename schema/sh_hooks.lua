@@ -81,8 +81,8 @@ Schema:RegisterRunFootstepFaction(FACTION_MPF, "metrocop", "metrocop_foley_step_
 -- nil means everyone can send/hear it; otherwise it's a whitelist. Names are
 -- just what's shown in chat ("<name> radios in <name>: ...") - rename freely.
 Schema.radioChannels = {
-	[1] = {name = "Tac", factions = nil},
-	[2] = {name = "Metropolice", factions = {FACTION_MPF, FACTION_OVERWATCH, FACTION_OTA}},
-	[3] = {name = "Transhuman Forces", factions = {FACTION_OTA, FACTION_OVERWATCH}},
-	[4] = {name = "Overwatch", factions = {FACTION_OVERWATCH}}
+	[1] = {name = "Tac 1", factions = nil},
+	[2] = {name = "Tac 2", factions = {FACTION_MPF, FACTION_OVERWATCH, FACTION_OTA}},
+	[3] = {name = "Tac 3", factions = {FACTION_OTA, FACTION_OVERWATCH}},
+	[4] = {name = "Tac 4", factions = {FACTION_OVERWATCH}}
 }
