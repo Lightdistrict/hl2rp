@@ -7,6 +7,18 @@ function CLASS:CanSwitchTo(client)
 	return client:IsSuperAdmin()
 end
 
+-- Scanners are anonymous - give them a callsign-style name (e.g. "AW:SCN:482")
+-- instead of whatever their character was previously named, matching the
+-- "SCN" rank-code IsDispatch() already looks for, which is how Scanner
+-- qualifies for the global dispatch chat/voice-line channel.
+function CLASS:OnSet(client)
+	local character = client:GetCharacter()
+
+	if (character) then
+		character:SetName(string.format("AW:SCN:%s", Schema:ZeroNumber(math.random(0, 999), 3)))
+	end
+end
+
 function CLASS:OnSpawn(client)
 	if (IsValid(client.ixScanner) and !client.ixScanner.bPendingRemove) then
 		client.ixScanner.position = client:GetPos()

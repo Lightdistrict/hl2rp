@@ -143,8 +143,8 @@ end
 
 do
 	local CLASS = {}
-	CLASS.color = Color(150, 100, 100)
-	CLASS.format = "Dispatch broadcasts \"%s\""
+	CLASS.color = Color(255, 0, 0)
+	CLASS.format = "OVERWATCH: \"%s\""
 
 	function CLASS:CanSay(speaker, text)
 		if (!speaker:IsDispatch()) then
