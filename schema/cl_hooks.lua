@@ -314,7 +314,11 @@ netstream.Hook("CombineDisplayMessage", function(text, color, arguments)
 end)
 
 netstream.Hook("PlaySound", function(sound)
-	surface.PlaySound(sound)
+	-- surface.PlaySound is unreliable for longer/stereo VO clips (silently
+	-- fails to play with no error) - EmitSound on the local player handles
+	-- arbitrary wav files properly and, since every client gets this
+	-- broadcast independently, still plays for everyone.
+	LocalPlayer():EmitSound(sound)
 end)
 
 netstream.Hook("Frequency", function(oldFrequency)

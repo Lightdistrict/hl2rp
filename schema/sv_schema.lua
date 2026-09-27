@@ -171,7 +171,7 @@ function Schema:CreateScanner(client, class)
 	entity:SetHealth(client:Health())
 	entity:SetMaxHealth(client:GetMaxHealth())
 	entity:Fire("setfollowtarget", uniqueID)
-	entity:Fire("inputshouldinspect", false)
+	entity:Fire("inputshouldinspect", "0")
 	entity:Fire("setdistanceoverride", "48")
 	entity:SetKeyValue("spawnflags", 8208)
 
