@@ -421,7 +421,13 @@ function Schema:PlayVoiceInfo(speaker, chatType, info)
 	local sound = istable(info.sound) and info.sound[math.random(#info.sound)] or info.sound
 
 	if (info.global) then
-		netstream.Start(nil, "PlaySound", sound)
+		-- broadcast citywide by emitting from every player directly (distance
+		-- to the listener is then always ~0, so it plays at full volume for
+		-- everyone) instead of routing through netstream/client-side
+		-- playback, which silently failed to play these files at all
+		for _, ply in ipairs(player.GetAll()) do
+			ply:EmitSound(sound)
+		end
 	else
 		local sounds = {sound}
 
