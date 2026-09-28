@@ -1,9 +1,8 @@
 -- Adds a skin selector to character creation, shown right after the model
--- grid. Currently only for Conscripts, since that's the faction that asked
--- for it - Schema.charCreateSkinFactions lists which factions get this.
+-- grid. Schema.charCreateSkinFactions lists which factions get this.
 -- Reuses the existing model preview panels (factionModel/descriptionModel/
 -- attributesModel) already on screen - no separate preview of its own.
-Schema.charCreateSkinFactions = Schema.charCreateSkinFactions or {FACTION_CONSCRIPT}
+Schema.charCreateSkinFactions = Schema.charCreateSkinFactions or {FACTION_CONSCRIPT, FACTION_MPF}
 
 ix.char.RegisterVar("skin", {
 	index = 3.5, -- right after "model" (3), before "attributes" (4)
