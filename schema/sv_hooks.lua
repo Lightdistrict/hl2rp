@@ -163,17 +163,29 @@ function Schema:CharacterVarChanged(character, key, oldValue, value)
 end
 
 -- The dropped world-model entity for an item (gamemode/entities/entities/
--- ix_item.lua) never applies ITEM.bodyGroups - it only sets the item's
+-- ix_item.lua) never applies any bodygroups - it only sets the item's
 -- model and skin - so a dropped/picked-up-by-someone-else outfit item
 -- always shows its base/default bodygroup state instead of the value the
 -- item is actually meant to represent. Call this from ITEM:OnEntityCreated
 -- to fix that up.
+--
+-- Deliberately reads ITEM.worldBodyGroups, NOT ITEM.bodyGroups - the two
+-- can be (and for the berets, ARE) completely different bodygroups on
+-- completely different meshes: ITEM.bodyGroups is applied to the PLAYER's
+-- own model via base_outfit (e.g. the "headwear" bodygroup on the
+-- thomask_110 player models, which swaps in a different head mesh per
+-- hat), while the world/inventory appearance comes from ITEM.model - a
+-- separate standalone prop (e.g. head_beret.mdl) that isn't guaranteed to
+-- share any bodygroup names, or even a bodygroup at all, with the player
+-- model. The beret prop, for instance, has its own "colour" bodygroup
+-- (confirmed via an in-game dump: id 0, name "colour", 2 values) that has
+-- nothing to do with "headwear" on the player model.
 function Schema:ApplyItemBodyGroups(entity, itemTable)
-	if (!istable(itemTable.bodyGroups)) then
+	if (!istable(itemTable.worldBodyGroups)) then
 		return
 	end
 
-	for name, value in pairs(itemTable.bodyGroups) do
+	for name, value in pairs(itemTable.worldBodyGroups) do
 		local index = entity:FindBodygroupByName(name)
 
 		if (index > -1) then

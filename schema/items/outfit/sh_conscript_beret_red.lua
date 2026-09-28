@@ -11,6 +11,15 @@ ITEM.bodyGroups = {
 	["headwear"] = 2
 }
 
+-- the standalone head_beret.mdl prop (used for the world/inventory
+-- appearance, separate from the player model this equips onto) has its
+-- own unrelated "colour" bodygroup, confirmed via an in-game dump (id 0,
+-- name "colour", 2 values) - guessing 1 = red here since black is 0; flip
+-- to 0 (and flip the black beret's to 1) if it turns out backwards in-game
+ITEM.worldBodyGroups = {
+	["colour"] = 1
+}
+
 local EQUIP_SOUND = "foley/inventory/inv_move2.wav"
 
 -- only equippable while on one of the current faction's actual models -
@@ -39,8 +48,8 @@ function ITEM:OnUnequipped()
 	Schema:ReapplyOutfitBodygroups(self.player)
 end
 
--- the dropped world-model entity doesn't know about ITEM.bodyGroups on its
--- own (see Schema:ApplyItemBodyGroups in sv_hooks.lua) - without this it
+-- the dropped world-model entity doesn't know about ITEM.worldBodyGroups on
+-- its own (see Schema:ApplyItemBodyGroups in sv_hooks.lua) - without this it
 -- always shows the default bodygroup state on the ground
 function ITEM:OnEntityCreated(entity)
 	Schema:ApplyItemBodyGroups(entity, self)

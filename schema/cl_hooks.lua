@@ -341,26 +341,39 @@ end)
 -- copy of the same file) calls its icon panel's :SetModel(model, skin)
 -- with only two arguments, even though the underlying model-preview panel
 -- supports a third bodygroups argument. That means an item's own
--- ITEM.bodyGroups never reaches its inventory icon - it always renders
--- with the model's default bodygroup state, even for items (like our
--- recolored berets) whose whole visual identity IS a bodygroup change.
--- Patch the icon panel after Helix builds it to apply the item's real
--- bodygroups directly to its live preview entity.
+-- bodygroups never reach its inventory icon - it always renders with the
+-- model's default bodygroup state, even for items (like our recolored
+-- berets) whose whole visual identity IS a bodygroup change.
+--
+-- Reads ITEM.worldBodyGroups, not ITEM.bodyGroups - same reasoning as
+-- Schema:ApplyItemBodyGroups in sv_hooks.lua: the icon renders ITEM.model,
+-- a standalone prop that can have entirely different bodygroups (or none)
+-- from the player model ITEM.bodyGroups targets.
+--
+-- Patch the icon panel after Helix builds it to apply those bodygroups
+-- directly to its live preview entity. The exact sub-panel/field holding
+-- that live entity isn't confirmed from source (ixItemIcon extends the
+-- stock "SpawnIcon" panel, whose internals aren't in this repo) - this
+-- tries the field names real SpawnIcon/DModelPanel-based panels commonly
+-- expose. If the icon still doesn't reflect the right bodygroup in-game,
+-- tell me exactly what panel.Icon/panel.Entity or the SpawnIcon docs show
+-- and this needs adjusting.
 local function ApplyIconBodyGroups(panel)
 	local itemTable = IsValid(panel) and panel.GetItemTable and panel:GetItemTable()
 
-	if (!itemTable or !istable(itemTable.bodyGroups)) then
+	if (!itemTable or !istable(itemTable.worldBodyGroups)) then
 		return
 	end
 
-	local modelPanel = panel.Icon
-	local entity = IsValid(modelPanel) and modelPanel.Entity
+	local entity = (IsValid(panel.Icon) and panel.Icon.Entity)
+		or panel.Entity
+		or (panel.GetEntity and panel:GetEntity())
 
 	if (!IsValid(entity)) then
 		return
 	end
 
-	for name, value in pairs(itemTable.bodyGroups) do
+	for name, value in pairs(itemTable.worldBodyGroups) do
 		local index = entity:FindBodygroupByName(name)
 
 		if (index > -1) then
