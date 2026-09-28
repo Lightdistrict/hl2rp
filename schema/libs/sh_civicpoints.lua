@@ -31,7 +31,9 @@ function Schema:BuildCivicLadders()
 				{class = CLASS_CONSCRIPT_LT, points = 60},
 				{class = CLASS_CONSCRIPT_CPT, points = 70},
 				{class = CLASS_CONSCRIPT_MAJ, points = 80},
-				{class = CLASS_CONSCRIPT_COL, points = 90}
+				{class = CLASS_CONSCRIPT_COL, points = 90},
+				{class = CLASS_CONSCRIPT_GEN, points = 100},
+				{class = CLASS_CONSCRIPT_GOCCF, points = 110}
 			},
 			nextFaction = FACTION_MPF,
 			nextFactionPoints = 60
