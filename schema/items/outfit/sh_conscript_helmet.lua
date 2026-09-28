@@ -5,9 +5,9 @@ ITEM.model = Model("models/props_c17/oildrum001.mdl") -- TODO: swap for the helm
 ITEM.category = "Clothing"
 ITEM.outfitCategory = "hat"
 
--- TODO: "helmet" and 1 are placeholders - replace with the real bodygroup
--- name and value that shows the helmet on the conscript models (see the
--- diagnostic command to find them)
+-- "headwear" has 4 values (0-3) on the conscript models - 0 is bare-headed
+-- (the default), so this assumes 1 is the helmet. If a different number
+-- turns out to actually be the helmet, just change the 1 below to match.
 ITEM.bodyGroups = {
-	["helmet"] = 1
+	["headwear"] = 1
 }
