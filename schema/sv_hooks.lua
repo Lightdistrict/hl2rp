@@ -162,23 +162,12 @@ function Schema:CharacterVarChanged(character, key, oldValue, value)
 	end
 end
 
--- base_outfit's own RemoveOutfit (gamemode/items/base/sh_outfit.lua) always
--- calls client:ResetBodygroups() - which zeroes EVERY bodygroup on the
--- model, not just the one the item being removed owns - then restores only
--- that item's own "oldGroups<outfitCategory>" snapshot. That snapshot is
--- never actually populated for independent single-bodygroup accessories
--- like ours (it's only written when a second outfit stacks on top of one
--- that had already saved character:GetData("groups"), which never happens
--- here), so unequipping one item wipes every other currently-equipped
--- outfit item's bodygroup with no way for base_outfit to put it back.
--- Call this after any outfit item's own equip/unequip logic to restore
--- every other still-equipped item's own bodygroup(s).
 -- The dropped world-model entity for an item (gamemode/entities/entities/
 -- ix_item.lua) never applies ITEM.bodyGroups - it only sets the item's
 -- model and skin - so a dropped/picked-up-by-someone-else outfit item
 -- always shows its base/default bodygroup state instead of the value the
--- item is actually meant to represent (e.g. a red beret showing black on
--- the ground). Call this from ITEM:OnEntityCreated to fix that up.
+-- item is actually meant to represent. Call this from ITEM:OnEntityCreated
+-- to fix that up.
 function Schema:ApplyItemBodyGroups(entity, itemTable)
 	if (!istable(itemTable.bodyGroups)) then
 		return
@@ -193,13 +182,41 @@ function Schema:ApplyItemBodyGroups(entity, itemTable)
 	end
 end
 
+-- base_outfit's own AddOutfit/RemoveOutfit (gamemode/items/base/sh_outfit.lua)
+-- keep a single, non-namespaced character:GetData("groups") snapshot plus a
+-- per-category character:GetData("oldGroups"<category>) snapshot, meant for
+-- ONE outfit piece being worn at a time. With several independent
+-- single-bodygroup accessories (helmet/vest/cap/beret) worn together, that
+-- bookkeeping gets cross-contaminated - RemoveOutfit's own
+-- client:ResetBodygroups() call zeroes EVERY bodygroup on the model, not
+-- just the one being removed, and the old-groups snapshot it restores from
+-- can end up holding a stale mix of whatever bodygroups happened to be set
+-- at some earlier equip, corrupting even the EQUIP path (a second item's
+-- ResetBodygroups() firing when it shouldn't).
+--
+-- Rather than trying to keep that bookkeeping consistent, this treats the
+-- character's bodygroup state as fully DERIVED from which outfit items are
+-- currently equipped: reset everything, wipe out base_outfit's own stale
+-- character data so it can't reset anything again later, then reapply only
+-- what every currently-equipped item's own ITEM.bodyGroups says. Call this
+-- after any outfit item's own equip/unequip logic.
 function Schema:ReapplyOutfitBodygroups(client)
 	local character = client:GetCharacter()
 	local inventory = character and character:GetInventory()
 
-	if (!inventory) then
+	if (!character or !inventory) then
 		return
 	end
+
+	character:SetData("groups", nil)
+
+	for _, item in pairs(ix.item.list) do
+		if (item.outfitCategory) then
+			character:SetData("oldGroups" .. item.outfitCategory, nil)
+		end
+	end
+
+	client:ResetBodygroups()
 
 	for item in inventory:Iter() do
 		if (item:GetData("equip") and istable(item.bodyGroups)) then
