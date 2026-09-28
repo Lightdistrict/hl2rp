@@ -336,101 +336,19 @@ netstream.Hook("ViewData", function(target, cid, data)
 	vgui.Create("ixViewData"):Populate(target, cid, data)
 end)
 
--- Helix's own inventory grid icon (vgui "ixInventory", core/derma/
--- cl_inventory.lua - the uirework_inventory plugin ships an unmodified
--- copy of the same file) calls its icon panel's :SetModel(model, skin)
--- with only two arguments, even though the panel's real inner model panel
--- (panel.Icon, a DModelPanel) supports a third bodygroups argument. That
--- means an item's own bodygroups never reach its inventory icon - it
--- always renders with the model's default bodygroup state, even for items
--- (like our recolored berets) whose whole visual identity IS a bodygroup
--- change.
---
--- Reads ITEM.worldBodyGroups, not ITEM.bodyGroups - same reasoning as
--- Schema:ApplyItemBodyGroups in sv_hooks.lua: the icon renders ITEM.model,
--- a standalone prop that can have entirely different bodygroups (or none)
--- from the player model ITEM.bodyGroups targets.
---
--- DModelPanel:SetModel's third argument is a STRING (same encoding as
--- Entity:SetBodyGroups), not a table - one raw byte per bodygroup index,
--- in order starting from 0 - confirmed by a live "string expected, got
--- table" error from an earlier attempt that passed a table. Build that
--- string from a throwaway clientside model: resolve each of our
--- name-keyed overrides to its index, apply it, then read the whole
--- bodygroup state back out one byte per group.
-local function BuildWorldBodyGroupString(model, groups)
-	local scratch = ClientsideModel(model, RENDERGROUP_OTHER)
-
-	if (!IsValid(scratch)) then
-		return nil
-	end
-
-	for name, value in pairs(groups) do
-		local index = scratch:FindBodygroupByName(name)
-
-		if (index > -1) then
-			scratch:SetBodygroup(index, value)
-		end
-	end
-
-	local count = scratch:GetNumBodyGroups()
-	local bytes = {}
-
-	for i = 0, count - 1 do
-		bytes[i + 1] = string.char(scratch:GetBodygroup(i))
-	end
-
-	scratch:Remove()
-
-	return table.concat(bytes)
-end
-
--- PostGamemodeLoaded had already fired by the time this file loaded (no
--- debug output at all showed up, even with the item visible in the
--- inventory) - schema client files load after that point, not before it -
--- so patch immediately instead. Schema files load after core Helix and
--- any UI plugins (uirework_inventory included) have already registered
--- their vgui panels, so "ixInventory" should already exist here.
-local inventoryTable = vgui.GetControlTable("ixInventory")
-
-print("[ixhl2rp icon debug] ixInventory table found=", tostring(inventoryTable != nil),
-	"has AddIcon=", tostring(inventoryTable != nil and inventoryTable.AddIcon != nil))
-
-if (inventoryTable and inventoryTable.AddIcon) then
-	local BaseAddIcon = inventoryTable.AddIcon
-
-	function inventoryTable:AddIcon(model, x, y, w, h, skin)
-		local panel = BaseAddIcon(self, model, x, y, w, h, skin)
-
-		local itemTable = IsValid(panel) and panel.GetItemTable and panel:GetItemTable()
-
-		if (itemTable and istable(itemTable.worldBodyGroups) and IsValid(panel.Icon)) then
-			local bodyGroupString = BuildWorldBodyGroupString(model, itemTable.worldBodyGroups)
-
-			if (bodyGroupString) then
-				-- panel.Icon turned out to be a native (C++-backed) panel,
-				-- not a plain Lua table with an inspectable .Entity field -
-				-- pairs() on it errors ("table expected, got userdata"),
-				-- confirming it manages its own render state internally.
-				--
-				-- RebuildSpawnIconEx({}) - an EMPTY camera table - visibly
-				-- corrupted the icon's framing (it went from "wrong color"
-				-- to "garbled image"), since a real camera position/angle/
-				-- fov is required and {} gives it none. SetModel with the
-				-- bodygroup string alone succeeds with no error and is
-				-- exactly how the icon got its correct framing in the
-				-- first place (Helix's own code never manually rebuilds
-				-- icons without iconCam set) - try relying on that alone
-				-- without forcing a rebuild with bad camera data.
-				panel.Icon:SetModel(model, skin, bodyGroupString)
-
-				print("[ixhl2rp icon debug]", itemTable.uniqueID, "bodyGroupString byte0=", bodyGroupString:byte(1))
-			end
-		end
-
-		return panel
-	end
-end
+-- ABANDONED: tried to make the inventory grid icon reflect an item's
+-- worldBodyGroups (Helix's stock AddIcon never passes bodygroups through
+-- to the icon panel, only model+skin). Every attempt either silently did
+-- nothing, errored on a wrong argument type, or - calling the icon
+-- panel's own :SetModel a second time with a bodygroup string, which by
+-- itself doesn't error - visibly corrupted the icon's rendering/framing
+-- entirely. panel.Icon is a native (C++-backed) panel with no inspectable
+-- Lua-side state (pairs() on it errors with "table expected, got
+-- userdata"), so there's no way to safely debug or fix this further
+-- without hands-on access to the actual client. Reverted - the inventory
+-- icon just shows the model's default bodygroup state, same as before any
+-- of this was attempted. The dropped-world-item fix (sv_hooks.lua /
+-- Schema:ApplyItemBodyGroups) is unaffected and confirmed working.
 
 netstream.Hook("ViewObjectives", function(data)
 	Schema:AddCombineDisplayMessage("@cViewObjectives")
