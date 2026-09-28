@@ -336,6 +336,57 @@ netstream.Hook("ViewData", function(target, cid, data)
 	vgui.Create("ixViewData"):Populate(target, cid, data)
 end)
 
+-- Helix's own inventory grid icon (vgui "ixInventory", core/derma/
+-- cl_inventory.lua - the uirework_inventory plugin ships an unmodified
+-- copy of the same file) calls its icon panel's :SetModel(model, skin)
+-- with only two arguments, even though the underlying model-preview panel
+-- supports a third bodygroups argument. That means an item's own
+-- ITEM.bodyGroups never reaches its inventory icon - it always renders
+-- with the model's default bodygroup state, even for items (like our
+-- recolored berets) whose whole visual identity IS a bodygroup change.
+-- Patch the icon panel after Helix builds it to apply the item's real
+-- bodygroups directly to its live preview entity.
+local function ApplyIconBodyGroups(panel)
+	local itemTable = IsValid(panel) and panel.GetItemTable and panel:GetItemTable()
+
+	if (!itemTable or !istable(itemTable.bodyGroups)) then
+		return
+	end
+
+	local modelPanel = panel.Icon
+	local entity = IsValid(modelPanel) and modelPanel.Entity
+
+	if (!IsValid(entity)) then
+		return
+	end
+
+	for name, value in pairs(itemTable.bodyGroups) do
+		local index = entity:FindBodygroupByName(name)
+
+		if (index > -1) then
+			entity:SetBodygroup(index, value)
+		end
+	end
+end
+
+hook.Add("PostGamemodeLoaded", "ixhl2rpOutfitIconBodygroups", function()
+	local inventoryTable = vgui.GetControlTable("ixInventory")
+
+	if (!inventoryTable or !inventoryTable.AddIcon) then
+		return
+	end
+
+	local BaseAddIcon = inventoryTable.AddIcon
+
+	function inventoryTable:AddIcon(model, x, y, w, h, skin)
+		local panel = BaseAddIcon(self, model, x, y, w, h, skin)
+
+		ApplyIconBodyGroups(panel)
+
+		return panel
+	end
+end)
+
 netstream.Hook("ViewObjectives", function(data)
 	Schema:AddCombineDisplayMessage("@cViewObjectives")
 	vgui.Create("ixViewObjectives"):Populate(data)

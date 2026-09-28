@@ -173,6 +173,26 @@ end
 -- outfit item's bodygroup with no way for base_outfit to put it back.
 -- Call this after any outfit item's own equip/unequip logic to restore
 -- every other still-equipped item's own bodygroup(s).
+-- The dropped world-model entity for an item (gamemode/entities/entities/
+-- ix_item.lua) never applies ITEM.bodyGroups - it only sets the item's
+-- model and skin - so a dropped/picked-up-by-someone-else outfit item
+-- always shows its base/default bodygroup state instead of the value the
+-- item is actually meant to represent (e.g. a red beret showing black on
+-- the ground). Call this from ITEM:OnEntityCreated to fix that up.
+function Schema:ApplyItemBodyGroups(entity, itemTable)
+	if (!istable(itemTable.bodyGroups)) then
+		return
+	end
+
+	for name, value in pairs(itemTable.bodyGroups) do
+		local index = entity:FindBodygroupByName(name)
+
+		if (index > -1) then
+			entity:SetBodygroup(index, value)
+		end
+	end
+end
+
 function Schema:ReapplyOutfitBodygroups(client)
 	local character = client:GetCharacter()
 	local inventory = character and character:GetInventory()

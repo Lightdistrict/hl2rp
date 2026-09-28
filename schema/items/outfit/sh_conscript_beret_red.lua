@@ -38,3 +38,10 @@ function ITEM:OnUnequipped()
 	-- Schema:ReapplyOutfitBodygroups in sv_hooks.lua) - put them back
 	Schema:ReapplyOutfitBodygroups(self.player)
 end
+
+-- the dropped world-model entity doesn't know about ITEM.bodyGroups on its
+-- own (see Schema:ApplyItemBodyGroups in sv_hooks.lua) - without this it
+-- always shows the default bodygroup state on the ground
+function ITEM:OnEntityCreated(entity)
+	Schema:ApplyItemBodyGroups(entity, self)
+end
