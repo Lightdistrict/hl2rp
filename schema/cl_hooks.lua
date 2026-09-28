@@ -410,18 +410,19 @@ if (inventoryTable and inventoryTable.AddIcon) then
 			if (bodyGroupString) then
 				panel.Icon:SetModel(model, skin, bodyGroupString)
 
-				-- TEMPORARY debug output - confirms the bodygroup actually
-				-- landed on the icon's own live entity this time
-				local readback = IsValid(panel.Icon.Entity) and panel.Icon.Entity:GetBodygroup(0)
+				-- TEMPORARY debug output - panel.Icon.Entity doesn't exist,
+				-- so dump every field actually on panel.Icon instead of
+				-- guessing another field name blind
+				print("[ixhl2rp icon debug]", itemTable.uniqueID, "bodyGroupString byte0=", bodyGroupString:byte(1))
+				print("[ixhl2rp icon debug] panel.Icon fields:")
 
-				print("[ixhl2rp icon debug]", itemTable.uniqueID,
-					"bodyGroupString byte0=", bodyGroupString:byte(1),
-					"panel.Icon.Entity valid=", tostring(IsValid(panel.Icon.Entity)),
-					"readback bodygroup0=", tostring(readback))
+				for k, v in pairs(panel.Icon) do
+					local ok, str = pcall(tostring, v)
+					print("  ", k, "=", ok and str or "<error tostring>")
+				end
 
-				if (panel.Icon.RebuildSpawnIconEx) then
-					local ok, err = pcall(function() panel.Icon:RebuildSpawnIconEx({}) end)
-					print("[ixhl2rp icon debug] RebuildSpawnIconEx ok=", ok, "err=", err)
+				if (panel.Icon.GetModel) then
+					print("[ixhl2rp icon debug] panel.Icon:GetModel()=", panel.Icon:GetModel())
 				end
 			end
 		end
