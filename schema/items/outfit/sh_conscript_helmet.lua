@@ -26,25 +26,22 @@ function ITEM:CanEquipOutfit()
 	return models != nil and table.HasValue(models, self.player:GetModel())
 end
 
+-- Armor here is a flat add/remove-on-toggle bonus rather than a tracked,
+-- degrading pool, so that multiple armor pieces (helmet, vest, etc.) stack
+-- cleanly regardless of order - each equipped piece just contributes its
+-- own maxArmor to the player's current total.
 function ITEM:OnEquipped()
-	self.player:SetArmor(self:GetData("armor", self.maxArmor))
+	self.player:SetArmor(self.player:Armor() + self.maxArmor)
 	self.player:EmitSound(EQUIP_SOUND, 60, 100, 0.5)
 end
 
 function ITEM:OnUnequipped()
-	self:SetData("armor", math.Clamp(self.player:Armor(), 0, self.maxArmor))
-	self.player:SetArmor(0)
+	self.player:SetArmor(math.max(self.player:Armor() - self.maxArmor, 0))
 	self.player:EmitSound(EQUIP_SOUND, 60, 100, 0.5)
 end
 
 function ITEM:OnLoadout()
 	if (self:GetData("equip")) then
-		self.player:SetArmor(self:GetData("armor", self.maxArmor))
-	end
-end
-
-function ITEM:OnSave()
-	if (self:GetData("equip")) then
-		self:SetData("armor", math.Clamp(self.player:Armor(), 0, self.maxArmor))
+		self.player:SetArmor(self.player:Armor() + self.maxArmor)
 	end
 end
