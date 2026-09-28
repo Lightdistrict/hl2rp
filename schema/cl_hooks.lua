@@ -395,8 +395,22 @@ hook.Add("PostGamemodeLoaded", "ixhl2rpOutfitIconBodygroups", function()
 		if (itemTable and istable(itemTable.worldBodyGroups)) then
 			local resolved = ResolveBodyGroupIndices(model, itemTable.worldBodyGroups)
 
+			-- TEMPORARY debug output - two attempts at this fix haven't
+			-- worked, so print exactly what's happening instead of guessing
+			-- a third time. Tell me what this prints in the client console
+			-- (~ key) after opening your inventory with the item visible.
+			print("[ixhl2rp icon debug]", itemTable.uniqueID,
+				"resolved=", resolved and table.ToString(resolved) or "NIL",
+				"panel.Icon valid=", tostring(IsValid(panel.Icon)),
+				"panel.Icon has RebuildSpawnIconEx=", tostring(IsValid(panel.Icon) and panel.Icon.RebuildSpawnIconEx != nil))
+
 			if (resolved and !table.IsEmpty(resolved)) then
 				panel:SetModel(model, skin, resolved)
+
+				if (IsValid(panel.Icon) and panel.Icon.RebuildSpawnIconEx) then
+					local ok, err = pcall(function() panel.Icon:RebuildSpawnIconEx({}) end)
+					print("[ixhl2rp icon debug] RebuildSpawnIconEx ok=", ok, "err=", err)
+				end
 			end
 		end
 
