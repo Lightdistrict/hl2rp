@@ -339,43 +339,50 @@ end)
 -- Helix's own inventory grid icon (vgui "ixInventory", core/derma/
 -- cl_inventory.lua - the uirework_inventory plugin ships an unmodified
 -- copy of the same file) calls its icon panel's :SetModel(model, skin)
--- with only two arguments, even though SpawnIcon's real :SetModel signature
--- is (model, skin, bodygroups). That means an item's own bodygroups never
--- reach its inventory icon - it always renders with the model's default
--- bodygroup state, even for items (like our recolored berets) whose whole
--- visual identity IS a bodygroup change.
+-- with only two arguments, even though the panel's real inner model panel
+-- (panel.Icon, a DModelPanel) supports a third bodygroups argument. That
+-- means an item's own bodygroups never reach its inventory icon - it
+-- always renders with the model's default bodygroup state, even for items
+-- (like our recolored berets) whose whole visual identity IS a bodygroup
+-- change.
 --
 -- Reads ITEM.worldBodyGroups, not ITEM.bodyGroups - same reasoning as
 -- Schema:ApplyItemBodyGroups in sv_hooks.lua: the icon renders ITEM.model,
 -- a standalone prop that can have entirely different bodygroups (or none)
 -- from the player model ITEM.bodyGroups targets.
 --
--- SpawnIcon:SetModel's bodygroups table is keyed by numeric bodygroup
--- index, but ours is keyed by name (to match FindBodygroupByName elsewhere
--- and survive the model being re-exported with different indices) - spin
--- up a throwaway clientside model just to resolve names to indices, then
--- call the icon panel's own public :SetModel again with all three
--- arguments so it rebuilds its preview correctly the first time.
-local function ResolveBodyGroupIndices(model, groups)
+-- DModelPanel:SetModel's third argument is a STRING (same encoding as
+-- Entity:SetBodyGroups), not a table - one raw byte per bodygroup index,
+-- in order starting from 0 - confirmed by a live "string expected, got
+-- table" error from an earlier attempt that passed a table. Build that
+-- string from a throwaway clientside model: resolve each of our
+-- name-keyed overrides to its index, apply it, then read the whole
+-- bodygroup state back out one byte per group.
+local function BuildWorldBodyGroupString(model, groups)
 	local scratch = ClientsideModel(model, RENDERGROUP_OTHER)
 
 	if (!IsValid(scratch)) then
 		return nil
 	end
 
-	local resolved = {}
-
 	for name, value in pairs(groups) do
 		local index = scratch:FindBodygroupByName(name)
 
 		if (index > -1) then
-			resolved[index] = value
+			scratch:SetBodygroup(index, value)
 		end
+	end
+
+	local count = scratch:GetNumBodyGroups()
+	local bytes = {}
+
+	for i = 0, count - 1 do
+		bytes[i + 1] = string.char(scratch:GetBodygroup(i))
 	end
 
 	scratch:Remove()
 
-	return resolved
+	return table.concat(bytes)
 end
 
 -- PostGamemodeLoaded had already fired by the time this file loaded (no
@@ -397,35 +404,20 @@ if (inventoryTable and inventoryTable.AddIcon) then
 
 		local itemTable = IsValid(panel) and panel.GetItemTable and panel:GetItemTable()
 
-		if (itemTable and istable(itemTable.worldBodyGroups)) then
-			local resolved = ResolveBodyGroupIndices(model, itemTable.worldBodyGroups)
+		if (itemTable and istable(itemTable.worldBodyGroups) and IsValid(panel.Icon)) then
+			local bodyGroupString = BuildWorldBodyGroupString(model, itemTable.worldBodyGroups)
 
-			-- TEMPORARY debug output. The previous version called
-			-- panel:SetModel(...) (the OUTER SpawnIcon panel) but then
-			-- panel.Icon:RebuildSpawnIconEx(...) (a DIFFERENT, inner
-			-- sub-panel) - both calls reported success, but if bodygroups
-			-- set on the outer panel don't propagate down to panel.Icon's
-			-- own entity, the rebuild would just re-bake panel.Icon's
-			-- untouched state, which matches exactly what was observed
-			-- (no error, no visual change). This version does everything
-			-- on panel.Icon consistently instead, and reads the bodygroup
-			-- back off its entity right after setting it to confirm it
-			-- actually landed there.
-			if (resolved and !table.IsEmpty(resolved) and IsValid(panel.Icon)) then
-				panel.Icon:SetModel(model, skin, resolved)
+			if (bodyGroupString) then
+				panel.Icon:SetModel(model, skin, bodyGroupString)
 
-				local readback = {}
-
-				if (IsValid(panel.Icon.Entity)) then
-					for index in pairs(resolved) do
-						readback[index] = panel.Icon.Entity:GetBodygroup(index)
-					end
-				end
+				-- TEMPORARY debug output - confirms the bodygroup actually
+				-- landed on the icon's own live entity this time
+				local readback = IsValid(panel.Icon.Entity) and panel.Icon.Entity:GetBodygroup(0)
 
 				print("[ixhl2rp icon debug]", itemTable.uniqueID,
-					"resolved=", table.ToString(resolved),
+					"bodyGroupString byte0=", bodyGroupString:byte(1),
 					"panel.Icon.Entity valid=", tostring(IsValid(panel.Icon.Entity)),
-					"readback=", table.ToString(readback))
+					"readback bodygroup0=", tostring(readback))
 
 				if (panel.Icon.RebuildSpawnIconEx) then
 					local ok, err = pcall(function() panel.Icon:RebuildSpawnIconEx({}) end)
