@@ -30,11 +30,20 @@ end
 function ITEM:OnEquipped()
 	self.player:SetArmor(self.player:Armor() + self.maxArmor)
 	self.player:EmitSound(EQUIP_SOUND, 60, 100, 0.5)
+
+	-- base_outfit doesn't touch other equipped outfit items' bodygroups on
+	-- equip, but this re-syncs them anyway in case that ever changes
+	Schema:ReapplyOutfitBodygroups(self.player)
 end
 
 function ITEM:OnUnequipped()
 	self.player:SetArmor(math.max(self.player:Armor() - self.maxArmor, 0))
 	self.player:EmitSound(EQUIP_SOUND, 60, 100, 0.5)
+
+	-- base_outfit's RemoveOutfit just called client:ResetBodygroups(), which
+	-- wipes every other currently-equipped outfit item's bodygroup too (see
+	-- Schema:ReapplyOutfitBodygroups in sv_hooks.lua) - put them back
+	Schema:ReapplyOutfitBodygroups(self.player)
 end
 
 function ITEM:OnLoadout()

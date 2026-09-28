@@ -162,6 +162,38 @@ function Schema:CharacterVarChanged(character, key, oldValue, value)
 	end
 end
 
+-- base_outfit's own RemoveOutfit (gamemode/items/base/sh_outfit.lua) always
+-- calls client:ResetBodygroups() - which zeroes EVERY bodygroup on the
+-- model, not just the one the item being removed owns - then restores only
+-- that item's own "oldGroups<outfitCategory>" snapshot. That snapshot is
+-- never actually populated for independent single-bodygroup accessories
+-- like ours (it's only written when a second outfit stacks on top of one
+-- that had already saved character:GetData("groups"), which never happens
+-- here), so unequipping one item wipes every other currently-equipped
+-- outfit item's bodygroup with no way for base_outfit to put it back.
+-- Call this after any outfit item's own equip/unequip logic to restore
+-- every other still-equipped item's own bodygroup(s).
+function Schema:ReapplyOutfitBodygroups(client)
+	local character = client:GetCharacter()
+	local inventory = character and character:GetInventory()
+
+	if (!inventory) then
+		return
+	end
+
+	for item in inventory:Iter() do
+		if (item:GetData("equip") and istable(item.bodyGroups)) then
+			for name, value in pairs(item.bodyGroups) do
+				local index = client:FindBodygroupByName(name)
+
+				if (index > -1) then
+					client:SetBodygroup(index, value)
+				end
+			end
+		end
+	end
+end
+
 -- Maps a traced surfaceprop name to one of our footstep sound categories.
 -- Source surfaceprops vary a lot by content pack (e.g. "wood.plank" vs
 -- "wood"), so this matches by substring rather than requiring an exact
