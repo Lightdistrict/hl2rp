@@ -15,6 +15,17 @@ ITEM.bodyGroups = {
 
 local EQUIP_SOUND = "foley/inventory/inv_move2.wav"
 
+-- only equippable while on one of the current faction's actual models -
+-- otherwise the headwear bodygroup change has nothing to apply to (wrong
+-- model entirely), so someone could equip it purely for the free armor
+-- with nothing showing on their playermodel
+function ITEM:CanEquipOutfit()
+	local faction = ix.faction.Get(self.player:Team())
+	local models = faction and faction:GetModels(self.player)
+
+	return models != nil and table.HasValue(models, self.player:GetModel())
+end
+
 function ITEM:OnEquipped()
 	self.player:SetArmor(self:GetData("armor", self.maxArmor))
 	self.player:EmitSound(EQUIP_SOUND, 60, 100, 0.5)
