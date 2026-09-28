@@ -66,6 +66,15 @@ function Schema:PlayerLoadout(client)
 end
 
 function Schema:PostPlayerLoadout(client)
+	-- outfit items' bodygroups only ever get applied at the moment they're
+	-- equipped (AddOutfit) - bodygroups reset to 0 on every fresh player
+	-- entity (respawn, or rejoining/loading a character), so an item that
+	-- was left equipped from a previous life stays marked as equipped in
+	-- its own data but visually disappears until manually unequipped and
+	-- re-equipped. Recompute bodygroup state from currently-equipped items
+	-- on every loadout to fix that.
+	Schema:ReapplyOutfitBodygroups(client)
+
 	if (client:IsCombine()) then
 		if (client:Team() == FACTION_OTA) then
 			client:SetMaxHealth(150)
