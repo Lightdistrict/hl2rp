@@ -236,6 +236,28 @@ local FOOTSTEP_STOCK_MATERIAL = {
 	woodpanel = "wood"
 }
 
+-- Some footstep packs (like OTA Heavy's) are real MP3 files, which
+-- Source's classic EmitSound can't decode - route those through the
+-- netstream/sound.PlayFile system instead, same as MP3 voice lines,
+-- audible to anyone near the walker. Genuine WAV files are unaffected.
+local FOOTSTEP_MP3_RANGE = 350
+
+function Schema:EmitFootstepSound(client, path)
+	if (path:lower():find("%.mp3$")) then
+		local recipients = {}
+
+		for _, ply in ipairs(player.GetAll()) do
+			if ((ply:GetPos() - client:GetPos()):LengthSqr() <= (FOOTSTEP_MP3_RANGE * FOOTSTEP_MP3_RANGE)) then
+				recipients[#recipients + 1] = ply
+			end
+		end
+
+		netstream.Start(recipients, "PlaySound", path)
+	else
+		client:EmitSound(path)
+	end
+end
+
 function Schema:PlayerFootstep(client, position, foot, soundName, volume)
 	local factionTable = ix.faction.Get(client:Team())
 
@@ -246,10 +268,10 @@ function Schema:PlayerFootstep(client, position, foot, soundName, volume)
 			local index = (client.ixRunFootstepIndex or 0) % runPack.count + 1
 			client.ixRunFootstepIndex = index
 
-			client:EmitSound(string.format("foley/%s/%s%d.wav", runPack.folder, runPack.prefix, index))
+			self:EmitFootstepSound(client, string.format("foley/%s/%s%d.wav", runPack.folder, runPack.prefix, index))
 			return true
 		elseif (factionTable.runSounds) then
-			client:EmitSound(factionTable.runSounds[foot])
+			self:EmitFootstepSound(client, factionTable.runSounds[foot])
 			return true
 		end
 	end
@@ -264,14 +286,14 @@ function Schema:PlayerFootstep(client, position, foot, soundName, volume)
 		local index = (client.ixClassFootstepIndex or 0) % classOverride.count + 1
 		client.ixClassFootstepIndex = index
 
-		client:EmitSound(string.format("footsteps/%s/%s%02d.wav", classOverride.folder, classOverride.prefix, index))
+		self:EmitFootstepSound(client, string.format("footsteps/%s/%s%02d.%s", classOverride.folder, classOverride.prefix, index, classOverride.ext))
 		return true
 	end
 
 	local material = self:GetFootstepMaterial(position)
 
 	if (!material) then
-		client:EmitSound(soundName)
+		self:EmitFootstepSound(client, soundName)
 		return true
 	end
 

@@ -84,11 +84,11 @@ Schema:RegisterRunFootstepFaction(FACTION_MPF, "metrocop", "metrocop_foley_step_
 -- zero-padded to 2 digits. Running is unaffected (see footstepRunPacks).
 Schema.footstepClassOverrides = Schema.footstepClassOverrides or {}
 
-function Schema:RegisterFootstepClass(classUniqueID, folder, prefix, count)
-	self.footstepClassOverrides[classUniqueID] = {folder = folder, prefix = prefix, count = count}
+function Schema:RegisterFootstepClass(classUniqueID, folder, prefix, count, ext)
+	self.footstepClassOverrides[classUniqueID] = {folder = folder, prefix = prefix, count = count, ext = ext or "wav"}
 end
 
-Schema:RegisterFootstepClass("ota_heavy", "charger", "charger_step_", 5)
+Schema:RegisterFootstepClass("ota_heavy", "charger", "charger_step_", 5, "mp3")
 
 -- The 4-channel combine radio (schema/items/sh_combine_radio.lua). "factions"
 -- nil means everyone can send/hear it; otherwise it's a whitelist. Names are
