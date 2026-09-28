@@ -97,6 +97,14 @@ ix.char.RegisterVar("skin", {
 		return panel
 	end,
 
+	-- Helix's server-side creation handler only calls OnAdjust for a var if
+	-- that var also has an OnValidate (core sh_character.lua:966-998) - this
+	-- was missing, so the skin was never actually being written to the new
+	-- character's data despite the preview showing it correctly.
+	OnValidate = function(self, value, payload, client)
+		return math.max(tonumber(value) or 0, 0)
+	end,
+
 	OnAdjust = function(self, client, data, value, newData)
 		if (!table.HasValue(Schema.charCreateSkinFactions, data.faction)) then
 			return
