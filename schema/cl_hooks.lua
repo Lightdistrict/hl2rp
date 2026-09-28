@@ -408,22 +408,21 @@ if (inventoryTable and inventoryTable.AddIcon) then
 			local bodyGroupString = BuildWorldBodyGroupString(model, itemTable.worldBodyGroups)
 
 			if (bodyGroupString) then
+				-- panel.Icon turned out to be a native (C++-backed) panel,
+				-- not a plain Lua table with an inspectable .Entity field -
+				-- pairs() on it errors ("table expected, got userdata"),
+				-- confirming it manages its own render state internally.
+				-- SetModel with a proper bodygroup STRING already succeeds
+				-- with no error - it just also needs an explicit rebake
+				-- afterward (same as Helix's own RenderNewIcon does) since
+				-- the icon is a cached/baked image, not a live 3D view.
 				panel.Icon:SetModel(model, skin, bodyGroupString)
 
-				-- TEMPORARY debug output - panel.Icon.Entity doesn't exist,
-				-- so dump every field actually on panel.Icon instead of
-				-- guessing another field name blind
-				print("[ixhl2rp icon debug]", itemTable.uniqueID, "bodyGroupString byte0=", bodyGroupString:byte(1))
-				print("[ixhl2rp icon debug] panel.Icon fields:")
+				local ok, err = pcall(function() panel.Icon:RebuildSpawnIconEx({}) end)
 
-				for k, v in pairs(panel.Icon) do
-					local ok, str = pcall(tostring, v)
-					print("  ", k, "=", ok and str or "<error tostring>")
-				end
-
-				if (panel.Icon.GetModel) then
-					print("[ixhl2rp icon debug] panel.Icon:GetModel()=", panel.Icon:GetModel())
-				end
+				print("[ixhl2rp icon debug]", itemTable.uniqueID,
+					"bodyGroupString byte0=", bodyGroupString:byte(1),
+					"rebuild ok=", ok, "err=", err)
 			end
 		end
 
