@@ -43,6 +43,15 @@ ix.char.RegisterVar("skin", {
 		end
 
 		local function Refresh()
+			-- this panel gets torn down and rebuilt every time the character
+			-- creation menu repopulates (e.g. navigating between steps), but
+			-- the payload hook below is never removed - once that happens,
+			-- this closure's own label/panel are stale, so bail out quietly
+			-- instead of erroring on a destroyed panel
+			if (!IsValid(label)) then
+				return
+			end
+
 			local charMenu = GetCharMenu()
 			local reference = IsValid(charMenu) and charMenu.descriptionModel
 
