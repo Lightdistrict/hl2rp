@@ -412,17 +412,19 @@ if (inventoryTable and inventoryTable.AddIcon) then
 				-- not a plain Lua table with an inspectable .Entity field -
 				-- pairs() on it errors ("table expected, got userdata"),
 				-- confirming it manages its own render state internally.
-				-- SetModel with a proper bodygroup STRING already succeeds
-				-- with no error - it just also needs an explicit rebake
-				-- afterward (same as Helix's own RenderNewIcon does) since
-				-- the icon is a cached/baked image, not a live 3D view.
+				--
+				-- RebuildSpawnIconEx({}) - an EMPTY camera table - visibly
+				-- corrupted the icon's framing (it went from "wrong color"
+				-- to "garbled image"), since a real camera position/angle/
+				-- fov is required and {} gives it none. SetModel with the
+				-- bodygroup string alone succeeds with no error and is
+				-- exactly how the icon got its correct framing in the
+				-- first place (Helix's own code never manually rebuilds
+				-- icons without iconCam set) - try relying on that alone
+				-- without forcing a rebuild with bad camera data.
 				panel.Icon:SetModel(model, skin, bodyGroupString)
 
-				local ok, err = pcall(function() panel.Icon:RebuildSpawnIconEx({}) end)
-
-				print("[ixhl2rp icon debug]", itemTable.uniqueID,
-					"bodyGroupString byte0=", bodyGroupString:byte(1),
-					"rebuild ok=", ok, "err=", err)
+				print("[ixhl2rp icon debug]", itemTable.uniqueID, "bodyGroupString byte0=", bodyGroupString:byte(1))
 			end
 		end
 
