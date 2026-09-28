@@ -1,16 +1,24 @@
-do
+-- /dispatch1../dispatch4 - each sends to the matching Tac channel's
+-- eligible factions (see Schema.radioChannels, sh_hooks.lua)
+for i = 1, 4 do
 	local COMMAND = {}
 	COMMAND.arguments = ix.type.text
 
 	function COMMAND:OnRun(client, message)
-		if (!client:IsRestricted()) then
-			ix.chat.Send(client, "dispatch", message)
-		else
+		if (client:IsRestricted()) then
 			return "@notNow"
 		end
+
+		local info = Schema.radioChannels[i]
+
+		if (info and info.factions and !table.HasValue(info.factions, client:Team())) then
+			return "@notAllowed"
+		end
+
+		ix.chat.Send(client, "dispatchchannel", message, false, nil, {channel = i})
 	end
 
-	ix.command.Add("Dispatch", COMMAND)
+	ix.command.Add("Dispatch" .. i, COMMAND)
 end
 
 do

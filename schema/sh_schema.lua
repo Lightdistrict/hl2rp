@@ -162,11 +162,14 @@ do
 	ix.chat.Register("dispatchbroadcast", CLASS)
 end
 
--- Combine-only - only OTA/Overwatch/MPF see the text or hear the audio
+-- /dispatch1../dispatch4 - dispatch picks which Tac channel the message
+-- goes to. Audience is that channel's faction whitelist (Schema.radioChannels)
+-- - unlike the personal radiochannel chat below, this doesn't require the
+-- listener to own/have an enabled radio, matching how a PA-style dispatch
+-- announcement should reach everyone eligible regardless of their own radio.
 do
 	local CLASS = {}
 	CLASS.color = Color(255, 0, 0)
-	CLASS.format = "Dispatch : \"%s\""
 
 	function CLASS:CanSay(speaker, text)
 		if (!speaker:IsDispatch()) then
@@ -176,17 +179,32 @@ do
 		end
 	end
 
-	function CLASS:CanHear(speaker, listener)
-		local team = listener:Team()
+	function CLASS:CanHear(speaker, listener, data)
+		if (listener:Team() == FACTION_OVERWATCH) then
+			return true
+		end
 
-		return team == FACTION_OTA or team == FACTION_OVERWATCH or team == FACTION_MPF
+		local info = Schema.radioChannels[data and data.channel]
+
+		if (!info) then
+			return false
+		end
+
+		if (info.factions and !table.HasValue(info.factions, listener:Team())) then
+			return false
+		end
+
+		return true
 	end
 
-	function CLASS:OnChatAdd(speaker, text)
-		chat.AddText(self.color, string.format(self.format, text))
+	function CLASS:OnChatAdd(speaker, text, bAnonymous, data)
+		local info = Schema.radioChannels[data and data.channel]
+		local channelName = info and info.name or "unknown"
+
+		chat.AddText(self.color, string.format("Dispatch says in %s: \"%s\"", channelName, text))
 	end
 
-	ix.chat.Register("dispatch", CLASS)
+	ix.chat.Register("dispatchchannel", CLASS)
 end
 
 -- 4-channel combine radio - channel/faction eligibility lives in

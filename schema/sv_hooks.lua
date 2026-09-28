@@ -409,7 +409,7 @@ function Schema:OnNPCKilled(npc, attacker, inflictor)
 	end
 end
 
-function Schema:PlayVoiceInfo(speaker, chatType, info)
+function Schema:PlayVoiceInfo(speaker, chatType, info, data)
 	if (!info.sound) then
 		return
 	end
@@ -442,15 +442,15 @@ function Schema:PlayVoiceInfo(speaker, chatType, info)
 				ply:EmitSound(sound)
 			end
 		end
-	elseif (chatType == "dispatch") then
-		-- /dispatch's audio should only reach the same audience as its chat
-		-- text (OTA/Overwatch/MPF)
+	elseif (chatType == "dispatchchannel") then
+		-- /dispatchN's audio should only reach the same audience as its chat
+		-- text - whichever faction whitelist that Tac channel has (or
+		-- everyone, for the everyone-channel)
+		local channelInfo = Schema.radioChannels[data and data.channel]
 		local recipients = {}
 
 		for _, ply in ipairs(player.GetAll()) do
-			local team = ply:Team()
-
-			if (team == FACTION_OTA or team == FACTION_OVERWATCH or team == FACTION_MPF) then
+			if (!channelInfo or !channelInfo.factions or table.HasValue(channelInfo.factions, ply:Team())) then
 				recipients[#recipients + 1] = ply
 			end
 		end
@@ -494,8 +494,8 @@ function Schema:PlayVoiceInfo(speaker, chatType, info)
 	end
 end
 
-function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers, rawText)
-	if (chatType == "ic" or chatType == "w" or chatType == "y" or chatType == "dispatch" or chatType == "dispatchbroadcast") then
+function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers, rawText, data)
+	if (chatType == "ic" or chatType == "w" or chatType == "y" or chatType == "dispatchchannel" or chatType == "dispatchbroadcast") then
 		local class = self.voices.GetClass(speaker)
 
 		-- exact match: the whole message is a voice command (e.g. "10-4"), which
@@ -504,7 +504,7 @@ function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers,
 			local info = self.voices.Get(v, rawText)
 
 			if (info) then
-				self:PlayVoiceInfo(speaker, chatType, info)
+				self:PlayVoiceInfo(speaker, chatType, info, data)
 
 				if (speaker:IsCombine()) then
 					return string.format("<:: %s ::>", info.text)
@@ -514,11 +514,11 @@ function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers,
 			end
 		end
 
-		-- /dispatch only: "<key> <free text>" - the key's own phrase is
+		-- /dispatchN only: "<key> <free text>" - the key's own phrase is
 		-- prefixed onto whatever the speaker typed after it, e.g.
 		-- "radio_escort all administrators to zone" plays the "radio_escort"
 		-- line's sound and sends "Escort all administrators to zone"
-		if (chatType == "dispatch") then
+		if (chatType == "dispatchchannel") then
 			local firstWord, rest = rawText:match("^(%S+)%s+(.+)$")
 
 			if (firstWord) then
@@ -526,7 +526,7 @@ function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers,
 					local info = self.voices.Get(v, firstWord)
 
 					if (info) then
-						self:PlayVoiceInfo(speaker, chatType, info)
+						self:PlayVoiceInfo(speaker, chatType, info, data)
 
 						local combined = string.format("%s %s", info.text, rest)
 
@@ -552,7 +552,7 @@ function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers,
 					local info = stored[word]
 
 					if (info) then
-						self:PlayVoiceInfo(speaker, chatType, info)
+						self:PlayVoiceInfo(speaker, chatType, info, data)
 
 						if (speaker:IsCombine()) then
 							return string.format("<:: %s ::>", text)
