@@ -339,47 +339,43 @@ end)
 -- Helix's own inventory grid icon (vgui "ixInventory", core/derma/
 -- cl_inventory.lua - the uirework_inventory plugin ships an unmodified
 -- copy of the same file) calls its icon panel's :SetModel(model, skin)
--- with only two arguments, even though the underlying model-preview panel
--- supports a third bodygroups argument. That means an item's own
--- bodygroups never reach its inventory icon - it always renders with the
--- model's default bodygroup state, even for items (like our recolored
--- berets) whose whole visual identity IS a bodygroup change.
+-- with only two arguments, even though SpawnIcon's real :SetModel signature
+-- is (model, skin, bodygroups). That means an item's own bodygroups never
+-- reach its inventory icon - it always renders with the model's default
+-- bodygroup state, even for items (like our recolored berets) whose whole
+-- visual identity IS a bodygroup change.
 --
 -- Reads ITEM.worldBodyGroups, not ITEM.bodyGroups - same reasoning as
 -- Schema:ApplyItemBodyGroups in sv_hooks.lua: the icon renders ITEM.model,
 -- a standalone prop that can have entirely different bodygroups (or none)
 -- from the player model ITEM.bodyGroups targets.
 --
--- Patch the icon panel after Helix builds it to apply those bodygroups
--- directly to its live preview entity. The exact sub-panel/field holding
--- that live entity isn't confirmed from source (ixItemIcon extends the
--- stock "SpawnIcon" panel, whose internals aren't in this repo) - this
--- tries the field names real SpawnIcon/DModelPanel-based panels commonly
--- expose. If the icon still doesn't reflect the right bodygroup in-game,
--- tell me exactly what panel.Icon/panel.Entity or the SpawnIcon docs show
--- and this needs adjusting.
-local function ApplyIconBodyGroups(panel)
-	local itemTable = IsValid(panel) and panel.GetItemTable and panel:GetItemTable()
+-- SpawnIcon:SetModel's bodygroups table is keyed by numeric bodygroup
+-- index, but ours is keyed by name (to match FindBodygroupByName elsewhere
+-- and survive the model being re-exported with different indices) - spin
+-- up a throwaway clientside model just to resolve names to indices, then
+-- call the icon panel's own public :SetModel again with all three
+-- arguments so it rebuilds its preview correctly the first time.
+local function ResolveBodyGroupIndices(model, groups)
+	local scratch = ClientsideModel(model, RENDERGROUP_OTHER)
 
-	if (!itemTable or !istable(itemTable.worldBodyGroups)) then
-		return
+	if (!IsValid(scratch)) then
+		return nil
 	end
 
-	local entity = (IsValid(panel.Icon) and panel.Icon.Entity)
-		or panel.Entity
-		or (panel.GetEntity and panel:GetEntity())
+	local resolved = {}
 
-	if (!IsValid(entity)) then
-		return
-	end
-
-	for name, value in pairs(itemTable.worldBodyGroups) do
-		local index = entity:FindBodygroupByName(name)
+	for name, value in pairs(groups) do
+		local index = scratch:FindBodygroupByName(name)
 
 		if (index > -1) then
-			entity:SetBodygroup(index, value)
+			resolved[index] = value
 		end
 	end
+
+	scratch:Remove()
+
+	return resolved
 end
 
 hook.Add("PostGamemodeLoaded", "ixhl2rpOutfitIconBodygroups", function()
@@ -394,7 +390,15 @@ hook.Add("PostGamemodeLoaded", "ixhl2rpOutfitIconBodygroups", function()
 	function inventoryTable:AddIcon(model, x, y, w, h, skin)
 		local panel = BaseAddIcon(self, model, x, y, w, h, skin)
 
-		ApplyIconBodyGroups(panel)
+		local itemTable = IsValid(panel) and panel.GetItemTable and panel:GetItemTable()
+
+		if (itemTable and istable(itemTable.worldBodyGroups)) then
+			local resolved = ResolveBodyGroupIndices(model, itemTable.worldBodyGroups)
+
+			if (resolved and !table.IsEmpty(resolved)) then
+				panel:SetModel(model, skin, resolved)
+			end
+		end
 
 		return panel
 	end
