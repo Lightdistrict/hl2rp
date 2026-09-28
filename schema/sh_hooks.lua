@@ -64,8 +64,6 @@ function Schema:RegisterFootstepFaction(factionID, folder)
 	self.footstepFactionFolders[factionID] = folder
 end
 
-Schema:RegisterFootstepFaction(FACTION_CONSCRIPT, "conscripts")
-
 -- Per-faction cycling run-footstep pack under sound/foley/<folder>/ - files
 -- are named <prefix><1..count>.wav. Factions without one registered keep
 -- using the faction's runSounds GameSound table (see sv_hooks.lua).
