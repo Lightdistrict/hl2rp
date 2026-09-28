@@ -77,6 +77,19 @@ end
 
 Schema:RegisterRunFootstepFaction(FACTION_MPF, "metrocop", "metrocop_foley_step_", 9)
 
+-- Per-class WALKING footstep override, keyed by the class's uniqueID (not
+-- its numeric index, which shifts if classes are added/removed) - takes
+-- priority over the material system entirely, so this class always uses
+-- this fixed cycling set regardless of surface. Files are <prefix><NN>.wav,
+-- zero-padded to 2 digits. Running is unaffected (see footstepRunPacks).
+Schema.footstepClassOverrides = Schema.footstepClassOverrides or {}
+
+function Schema:RegisterFootstepClass(classUniqueID, folder, prefix, count)
+	self.footstepClassOverrides[classUniqueID] = {folder = folder, prefix = prefix, count = count}
+end
+
+Schema:RegisterFootstepClass("ota_heavy", "charger", "charger_step_", 5)
+
 -- The 4-channel combine radio (schema/items/sh_combine_radio.lua). "factions"
 -- nil means everyone can send/hear it; otherwise it's a whitelist. Names are
 -- just what's shown in chat ("<name> radios in <name>: ...") - rename freely.

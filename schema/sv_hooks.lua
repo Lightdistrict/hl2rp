@@ -254,6 +254,20 @@ function Schema:PlayerFootstep(client, position, foot, soundName, volume)
 		end
 	end
 
+	-- walking - a per-class override (if registered) always wins, regardless
+	-- of surface material
+	local character = client:GetCharacter()
+	local classInfo = character and ix.class.Get(character:GetClass())
+	local classOverride = classInfo and self.footstepClassOverrides[classInfo.uniqueID]
+
+	if (classOverride) then
+		local index = (client.ixClassFootstepIndex or 0) % classOverride.count + 1
+		client.ixClassFootstepIndex = index
+
+		client:EmitSound(string.format("footsteps/%s/%s%02d.wav", classOverride.folder, classOverride.prefix, index))
+		return true
+	end
+
 	local material = self:GetFootstepMaterial(position)
 
 	if (!material) then
