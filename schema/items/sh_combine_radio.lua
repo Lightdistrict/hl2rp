@@ -26,9 +26,26 @@ function ITEM.postHooks.drop(item, status)
 	item:SetData("enabled", false)
 end
 
+-- these are MP3 files, which Source's classic EmitSound can't decode, so
+-- broadcast them the same way PlayVoiceInfo does for local MP3 voice lines -
+-- a netstream to nearby players, played client-side via sound.PlayFile
+local function PlayRadioChirp(client, sound)
+	local range = ix.config.Get("chatRange", 280)
+	local recipients = {}
+
+	for _, ply in ipairs(player.GetAll()) do
+		if ((ply:GetPos() - client:GetPos()):LengthSqr() <= (range * range)) then
+			recipients[#recipients + 1] = ply
+		end
+	end
+
+	netstream.Start(recipients, "PlaySound", sound)
+end
+
 ITEM.functions.Toggle = {
 	OnRun = function(itemTable)
 		local enabled = !itemTable:GetData("enabled", false)
+		local client = itemTable.player
 
 		itemTable:SetData("enabled", enabled)
 
@@ -38,7 +55,8 @@ ITEM.functions.Toggle = {
 			itemTable:SetData("channel", 1)
 		end
 
-		itemTable.player:EmitSound("buttons/lever7.wav", 50, math.random(170, 180), 0.25)
+		PlayRadioChirp(client, enabled and "foley/handheld_radio/choreo_radiochirp_start.mp3"
+			or "foley/handheld_radio/choreo_radiochirp_end.mp3")
 
 		return false
 	end
