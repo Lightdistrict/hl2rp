@@ -400,19 +400,34 @@ if (inventoryTable and inventoryTable.AddIcon) then
 		if (itemTable and istable(itemTable.worldBodyGroups)) then
 			local resolved = ResolveBodyGroupIndices(model, itemTable.worldBodyGroups)
 
-			-- TEMPORARY debug output - two attempts at this fix haven't
-			-- worked, so print exactly what's happening instead of guessing
-			-- a third time. Tell me what this prints in the client console
-			-- (~ key) after opening your inventory with the item visible.
-			print("[ixhl2rp icon debug]", itemTable.uniqueID,
-				"resolved=", resolved and table.ToString(resolved) or "NIL",
-				"panel.Icon valid=", tostring(IsValid(panel.Icon)),
-				"panel.Icon has RebuildSpawnIconEx=", tostring(IsValid(panel.Icon) and panel.Icon.RebuildSpawnIconEx != nil))
+			-- TEMPORARY debug output. The previous version called
+			-- panel:SetModel(...) (the OUTER SpawnIcon panel) but then
+			-- panel.Icon:RebuildSpawnIconEx(...) (a DIFFERENT, inner
+			-- sub-panel) - both calls reported success, but if bodygroups
+			-- set on the outer panel don't propagate down to panel.Icon's
+			-- own entity, the rebuild would just re-bake panel.Icon's
+			-- untouched state, which matches exactly what was observed
+			-- (no error, no visual change). This version does everything
+			-- on panel.Icon consistently instead, and reads the bodygroup
+			-- back off its entity right after setting it to confirm it
+			-- actually landed there.
+			if (resolved and !table.IsEmpty(resolved) and IsValid(panel.Icon)) then
+				panel.Icon:SetModel(model, skin, resolved)
 
-			if (resolved and !table.IsEmpty(resolved)) then
-				panel:SetModel(model, skin, resolved)
+				local readback = {}
 
-				if (IsValid(panel.Icon) and panel.Icon.RebuildSpawnIconEx) then
+				if (IsValid(panel.Icon.Entity)) then
+					for index in pairs(resolved) do
+						readback[index] = panel.Icon.Entity:GetBodygroup(index)
+					end
+				end
+
+				print("[ixhl2rp icon debug]", itemTable.uniqueID,
+					"resolved=", table.ToString(resolved),
+					"panel.Icon.Entity valid=", tostring(IsValid(panel.Icon.Entity)),
+					"readback=", table.ToString(readback))
+
+				if (panel.Icon.RebuildSpawnIconEx) then
 					local ok, err = pcall(function() panel.Icon:RebuildSpawnIconEx({}) end)
 					print("[ixhl2rp icon debug] RebuildSpawnIconEx ok=", ok, "err=", err)
 				end
