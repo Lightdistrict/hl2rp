@@ -378,13 +378,18 @@ local function ResolveBodyGroupIndices(model, groups)
 	return resolved
 end
 
-hook.Add("PostGamemodeLoaded", "ixhl2rpOutfitIconBodygroups", function()
-	local inventoryTable = vgui.GetControlTable("ixInventory")
+-- PostGamemodeLoaded had already fired by the time this file loaded (no
+-- debug output at all showed up, even with the item visible in the
+-- inventory) - schema client files load after that point, not before it -
+-- so patch immediately instead. Schema files load after core Helix and
+-- any UI plugins (uirework_inventory included) have already registered
+-- their vgui panels, so "ixInventory" should already exist here.
+local inventoryTable = vgui.GetControlTable("ixInventory")
 
-	if (!inventoryTable or !inventoryTable.AddIcon) then
-		return
-	end
+print("[ixhl2rp icon debug] ixInventory table found=", tostring(inventoryTable != nil),
+	"has AddIcon=", tostring(inventoryTable != nil and inventoryTable.AddIcon != nil))
 
+if (inventoryTable and inventoryTable.AddIcon) then
 	local BaseAddIcon = inventoryTable.AddIcon
 
 	function inventoryTable:AddIcon(model, x, y, w, h, skin)
@@ -416,7 +421,7 @@ hook.Add("PostGamemodeLoaded", "ixhl2rpOutfitIconBodygroups", function()
 
 		return panel
 	end
-end)
+end
 
 netstream.Hook("ViewObjectives", function(data)
 	Schema:AddCombineDisplayMessage("@cViewObjectives")
