@@ -377,8 +377,11 @@ end)
 -- positioning. Schema.previewWeaponOffsets holds those corrections,
 -- keyed by weapon class, as a LOCAL offset relative to the attachment
 -- (not a world-space one) so it stays correct regardless of how the
--- player is angled. Empty by default - add entries as weapons are tuned.
-Schema.previewWeaponOffsets = Schema.previewWeaponOffsets or {}
+-- player is angled. Tuned live via ix_tune_weapon_preview below as
+-- weapons are found to look wrong.
+Schema.previewWeaponOffsets = Schema.previewWeaponOffsets or {
+	["tfa_suppressor"] = {pos = Vector(15.00, 0.00, 0.00), ang = Angle(0.00, 180.00, 360.00)}
+}
 
 local PREVIEW_WEAPON_ATTACHMENT = "anim_attachment_RH"
 local previewWeaponEntity
