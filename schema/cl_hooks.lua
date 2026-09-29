@@ -369,10 +369,17 @@ end)
 -- preview entity's right-hand attachment ("anim_attachment_RH", the
 -- standard HL2/Source biped weapon-hold attachment - present on stock HL2
 -- citizen/combine skeletons, which the Conscript models are built on).
--- The exact position/angle a weapon looks right at can vary per weapon
--- model and may need a small per-model offset adjustment once you can
--- actually see it in-game - tell me if a particular gun looks rotated or
--- offset and I'll add a correction for that one.
+--
+-- Every weapon's world model has its own natural orientation/origin baked
+-- in by whoever made it, so no single position/angle looks right sitting
+-- directly on the attachment for every weapon - each one needs its own
+-- small correction on top, same underlying problem as viewmodel
+-- positioning. Schema.previewWeaponOffsets holds those corrections,
+-- keyed by weapon class, as a LOCAL offset relative to the attachment
+-- (not a world-space one) so it stays correct regardless of how the
+-- player is angled. Empty by default - add entries as weapons are tuned.
+Schema.previewWeaponOffsets = Schema.previewWeaponOffsets or {}
+
 local PREVIEW_WEAPON_ATTACHMENT = "anim_attachment_RH"
 local previewWeaponEntity
 
@@ -429,11 +436,71 @@ hook.Add("DrawHelixModelView", "ixhl2rpPreviewHeldWeapon", function(panel, entit
 	local attachment = attachmentID > 0 and entity:GetAttachment(attachmentID)
 
 	if (attachment) then
-		weaponEntity:SetPos(attachment.Pos)
-		weaponEntity:SetAngles(attachment.Ang)
+		local correction = Schema.previewWeaponOffsets[weapon:GetClass()]
+
+		if (correction) then
+			local pos, ang = LocalToWorld(correction.pos, correction.ang, attachment.Pos, attachment.Ang)
+			weaponEntity:SetPos(pos)
+			weaponEntity:SetAngles(ang)
+		else
+			weaponEntity:SetPos(attachment.Pos)
+			weaponEntity:SetAngles(attachment.Ang)
+		end
 	end
 
 	weaponEntity:DrawModel()
+end)
+
+-- Live tuning tool for the per-weapon corrections above - open your
+-- inventory so you can see the preview, switch to the weapon that looks
+-- wrong, then run e.g. "ix_tune_weapon_preview x 1" / "ix_tune_weapon_preview yaw 15"
+-- to nudge it (negative numbers move the other way) while watching it
+-- update live. Run with no arguments to print the current offset and a
+-- ready-to-send line for that weapon - paste that back once it looks
+-- right so it can be saved permanently (this command's changes are
+-- client-only and runtime-only; they won't survive a reconnect on their
+-- own).
+concommand.Add("ix_tune_weapon_preview", function(client, cmd, args)
+	local weapon = LocalPlayer():GetActiveWeapon()
+
+	if (!IsValid(weapon)) then
+		print("[ixhl2rp] You need an active weapon to tune.")
+		return
+	end
+
+	local class = weapon:GetClass()
+	local current = Schema.previewWeaponOffsets[class]
+
+	if (!current) then
+		current = {pos = Vector(0, 0, 0), ang = Angle(0, 0, 0)}
+		Schema.previewWeaponOffsets[class] = current
+	end
+
+	local axis = args[1] and args[1]:lower()
+	local amount = tonumber(args[2])
+
+	if (axis and amount) then
+		if (axis == "x") then
+			current.pos.x = current.pos.x + amount
+		elseif (axis == "y") then
+			current.pos.y = current.pos.y + amount
+		elseif (axis == "z") then
+			current.pos.z = current.pos.z + amount
+		elseif (axis == "pitch") then
+			current.ang.p = current.ang.p + amount
+		elseif (axis == "yaw") then
+			current.ang.y = current.ang.y + amount
+		elseif (axis == "roll") then
+			current.ang.r = current.ang.r + amount
+		else
+			print("[ixhl2rp] Unknown axis '"..axis.."' - use x, y, z, pitch, yaw, or roll.")
+			return
+		end
+	end
+
+	print(string.format("[ixhl2rp] Offset for \"%s\":", class))
+	print(string.format('Schema.previewWeaponOffsets["%s"] = {pos = Vector(%.2f, %.2f, %.2f), ang = Angle(%.2f, %.2f, %.2f)}',
+		class, current.pos.x, current.pos.y, current.pos.z, current.ang.p, current.ang.y, current.ang.r))
 end)
 
 -- ixModelPanel's own DrawModel (core/derma/cl_modelpanel.lua) only calls
