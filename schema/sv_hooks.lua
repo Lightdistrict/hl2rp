@@ -239,6 +239,20 @@ function Schema:ReapplyOutfitBodygroups(client)
 
 	client:ResetBodygroups()
 
+	-- rank-based bodygroups (e.g. Conscript epaulettes, Schema.conscriptEpaulettes
+	-- in sh_civicpoints.lua) aren't tied to an inventory item, so they have to be
+	-- reapplied here too - otherwise equipping/unequipping any outfit item would
+	-- wipe them back to 0 via the ResetBodygroups() call just above
+	local epaulettes = self.conscriptEpaulettes and self.conscriptEpaulettes[character:GetClass()]
+
+	if (epaulettes) then
+		local index = client:FindBodygroupByName("epaulettes")
+
+		if (index > -1) then
+			client:SetBodygroup(index, epaulettes)
+		end
+	end
+
 	for item in inventory:Iter() do
 		if (item:GetData("equip") and istable(item.bodyGroups)) then
 			for name, value in pairs(item.bodyGroups) do

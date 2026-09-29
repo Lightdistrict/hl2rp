@@ -90,6 +90,29 @@ function Schema:BuildCivicLadders()
 		[CLASS_OTA_ORDINAL] = "ORDINAL",
 		[CLASS_OTA_ELITE] = "KING"
 	}
+
+	-- Conscript player models have an "epaulettes" bodygroup that visually
+	-- tracks rank - starts at 1 for the default Private class, going up by
+	-- 1 each rank, capping at 12 for the top rank (General of the Combine
+	-- Conscript Forces) with nothing beyond that, same as civic points
+	-- themselves just stop mattering once you're at the top of the ladder.
+	-- Keyed by class rather than incremented step-by-step so it can't get
+	-- out of sync if a promotion ever skips ranks (e.g. a big points
+	-- award landing a Private straight at a much higher rank in one go).
+	self.conscriptEpaulettes = {
+		[CLASS_CONSCRIPT_PVT] = 1,
+		[CLASS_CONSCRIPT_PFC] = 2,
+		[CLASS_CONSCRIPT_CPL] = 3,
+		[CLASS_CONSCRIPT_SGT] = 4,
+		[CLASS_CONSCRIPT_SSGT] = 5,
+		[CLASS_CONSCRIPT_MSGT] = 6,
+		[CLASS_CONSCRIPT_LT] = 7,
+		[CLASS_CONSCRIPT_CPT] = 8,
+		[CLASS_CONSCRIPT_MAJ] = 9,
+		[CLASS_CONSCRIPT_COL] = 10,
+		[CLASS_CONSCRIPT_GEN] = 11,
+		[CLASS_CONSCRIPT_GOCCF] = 12
+	}
 end
 
 function Schema:OnLoaded()
@@ -195,6 +218,11 @@ if (SERVER) then
 
 			character:SetClass(target)
 			hook.Run("PlayerJoinedClass", client, target, oldClass)
+
+			-- refreshes the Conscript "epaulettes" bodygroup (see
+			-- Schema.conscriptEpaulettes above) to match the new rank
+			-- immediately, rather than waiting for the next respawn
+			self:ReapplyOutfitBodygroups(client)
 
 			client:Notify("You have been promoted!")
 		end
