@@ -4,6 +4,14 @@ ITEM.model = Model("models/gibs/shield_scanner_gib1.mdl")
 ITEM.description = "A radio with 4 fixed channels.\nIt is currently turned %s, set to channel %d (%s)."
 ITEM.cost = 50
 
+-- shows on the Conscript playermodel's "radio" bodygroup while equipped -
+-- separate from being turned on/off (below), same distinction as wearing
+-- a helmet vs it having power: you can carry/wear the radio equipped
+-- without it being on, or have it on while it's not physically shown
+ITEM.bodyGroups = {
+	["radio"] = 1
+}
+
 -- Inventory drawing
 if (CLIENT) then
 	function ITEM:PaintOver(item, w, h)
@@ -24,6 +32,13 @@ end
 
 function ITEM.postHooks.drop(item, status)
 	item:SetData("enabled", false)
+
+	-- dropping it while worn shouldn't leave the bodygroup showing on a
+	-- player who no longer has the item at all
+	if (item:GetData("equip") and IsValid(item.player)) then
+		item:SetData("equip", false)
+		Schema:ReapplyOutfitBodygroups(item.player)
+	end
 end
 
 -- these are MP3 files, which Source's classic EmitSound can't decode, so
@@ -42,21 +57,72 @@ local function PlayRadioChirp(client, sound)
 	netstream.Start(recipients, "PlaySound", sound)
 end
 
-ITEM.functions.Toggle = {
+-- Equipping is what makes the radio show on the player's own model (the
+-- "radio" bodygroup above) - split the same way base_outfit splits
+-- Equip/EquipUn, and using the same tip/icon keys so it fits right in
+-- alongside a clothing item's own equip/unequip options.
+ITEM.functions.Equip = {
+	name = "equip",
+	tip = "equipTip",
+	icon = "icon16/tick.png",
+	OnCanRun = function(item)
+		return !item:GetData("equip", false)
+	end,
 	OnRun = function(itemTable)
-		local enabled = !itemTable:GetData("enabled", false)
+		itemTable:SetData("equip", true)
+		Schema:ReapplyOutfitBodygroups(itemTable.player)
+
+		return false
+	end
+}
+
+ITEM.functions.EquipUn = {
+	name = "unequip",
+	tip = "unequipTip",
+	icon = "icon16/cross.png",
+	OnCanRun = function(item)
+		return item:GetData("equip", false) == true
+	end,
+	OnRun = function(itemTable)
+		itemTable:SetData("equip", false)
+		Schema:ReapplyOutfitBodygroups(itemTable.player)
+
+		return false
+	end
+}
+
+-- Turning it on/off is a SEPARATE state from being equipped/worn - it
+-- controls whether the radio can send/receive on a channel at all, not
+-- whether it's visible on the player's model.
+ITEM.functions.TurnOn = {
+	name = "Turn On",
+	OnCanRun = function(item)
+		return !item:GetData("enabled", false)
+	end,
+	OnRun = function(itemTable)
 		local client = itemTable.player
 
-		itemTable:SetData("enabled", enabled)
+		itemTable:SetData("enabled", true)
 
-		-- always come on tuned to the everyone-channel, regardless of what
-		-- it was last left on
-		if (enabled) then
-			itemTable:SetData("channel", 1)
-		end
+		-- always comes on tuned to the everyone-channel, regardless of
+		-- what it was last left on
+		itemTable:SetData("channel", 1)
 
-		PlayRadioChirp(client, enabled and "foley/handheld_radio/choreo_radiochirp_start.mp3"
-			or "foley/handheld_radio/choreo_radiochirp_end.mp3")
+		PlayRadioChirp(client, "foley/handheld_radio/choreo_radiochirp_start.mp3")
+
+		return false
+	end
+}
+
+ITEM.functions.TurnOff = {
+	name = "Turn Off",
+	OnCanRun = function(item)
+		return item:GetData("enabled", false) == true
+	end,
+	OnRun = function(itemTable)
+		itemTable:SetData("enabled", false)
+
+		PlayRadioChirp(itemTable.player, "foley/handheld_radio/choreo_radiochirp_end.mp3")
 
 		return false
 	end
