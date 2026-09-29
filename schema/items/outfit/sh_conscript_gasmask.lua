@@ -34,15 +34,20 @@ end
 -- Sent straight to the wearer's own client only (not a nearby-players
 -- broadcast like Schema:EmitNearbyMP3) - a personal immersion effect,
 -- not something bystanders should hear.
+--
+-- item is a plain ITEM table, not an entity - IsValid() only ever returns
+-- true for things with their own :IsValid() method (entities, panels),
+-- so IsValid(item) was ALWAYS false here and made this bail out before
+-- ever playing a sound. Just check it's non-nil instead.
 local function ScheduleBreath(client, item)
 	local timerName = "ixhl2rpGasmaskBreath" .. client:EntIndex()
 
 	timer.Create(timerName, math.random(3, 5), 1, function()
-		if (!IsValid(client) or !IsValid(item) or !item:GetData("equip")) then
+		if (!IsValid(client) or !item or !item:GetData("equip")) then
 			return
 		end
 
-		netstream.Start(client, "PlaySound", BREATH_SOUNDS[math.random(#BREATH_SOUNDS)])
+		netstream.Start({client}, "PlaySound", BREATH_SOUNDS[math.random(#BREATH_SOUNDS)])
 		ScheduleBreath(client, item)
 	end)
 end
