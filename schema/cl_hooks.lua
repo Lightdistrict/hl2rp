@@ -382,7 +382,8 @@ end)
 Schema.previewWeaponOffsets = Schema.previewWeaponOffsets or {
 	["tfa_suppressor"] = {pos = Vector(15.00, 0.00, 0.00), ang = Angle(0.00, 180.00, 360.00)},
 	["tfa_heavyshotgun"] = {pos = Vector(13.00, 0.00, 1.00), ang = Angle(0.00, 180.00, 0.00)},
-	["tfa_ocipr"] = {pos = Vector(15.00, 0.00, 0.00), ang = Angle(0.00, 180.00, 0.00)}
+	["tfa_ocipr"] = {pos = Vector(15.00, 0.00, 0.00), ang = Angle(0.00, 180.00, 0.00)},
+	["tfa_osips"] = {pos = Vector(12.00, 0.00, 0.00), ang = Angle(0.00, 180.00, 0.00)}
 }
 
 local PREVIEW_WEAPON_ATTACHMENT = "anim_attachment_RH"
