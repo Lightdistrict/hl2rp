@@ -144,6 +144,12 @@ function Schema:PlayerLoadedCharacter(client, character, oldCharacter)
 		end
 
 		self:UpdateConscriptName(character)
+
+		-- backfills the rank-reward berets (sh_civicpoints.lua) for a
+		-- character that already qualifies but was created/promoted before
+		-- this system existed - safe to call every load, its own flag
+		-- stops it from granting twice
+		self:GrantConscriptRankItems(character)
 	elseif (faction == FACTION_MPF) then
 		if (!character:GetData("callsign")) then
 			character:SetData("callsign", self.mpfCallsignWords[math.random(#self.mpfCallsignWords)])

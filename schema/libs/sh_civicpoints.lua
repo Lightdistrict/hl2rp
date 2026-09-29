@@ -24,19 +24,24 @@ function Schema:BuildCivicLadders()
 		[FACTION_CONSCRIPT] = {
 			ranks = {
 				{class = CLASS_CONSCRIPT_PFC, points = 10},
-				{class = CLASS_CONSCRIPT_CPL, points = 20},
-				{class = CLASS_CONSCRIPT_SGT, points = 30},
-				{class = CLASS_CONSCRIPT_SSGT, points = 40},
-				{class = CLASS_CONSCRIPT_MSGT, points = 50},
-				{class = CLASS_CONSCRIPT_LT, points = 60},
-				{class = CLASS_CONSCRIPT_CPT, points = 70},
-				{class = CLASS_CONSCRIPT_MAJ, points = 80},
-				{class = CLASS_CONSCRIPT_COL, points = 90},
-				{class = CLASS_CONSCRIPT_GEN, points = 100},
-				{class = CLASS_CONSCRIPT_GOCCF, points = 110}
+				{class = CLASS_CONSCRIPT_SPC, points = 20},
+				{class = CLASS_CONSCRIPT_CPL, points = 30},
+				{class = CLASS_CONSCRIPT_SGT, points = 40},
+				{class = CLASS_CONSCRIPT_SSGT, points = 50},
+				{class = CLASS_CONSCRIPT_MSGT, points = 60},
+				{class = CLASS_CONSCRIPT_LT, points = 70},
+				{class = CLASS_CONSCRIPT_CPT, points = 80},
+				{class = CLASS_CONSCRIPT_MAJ, points = 90},
+				{class = CLASS_CONSCRIPT_COL, points = 100},
+				{class = CLASS_CONSCRIPT_GEN, points = 110},
+				{class = CLASS_CONSCRIPT_GOCCF, points = 120}
 			},
 			nextFaction = FACTION_MPF,
-			nextFactionPoints = 60
+			-- was 60 (Lieutenant's old threshold) - shifted +10 to 70 to
+			-- keep "unlocks MPF at Lieutenant" true now that Specialist
+			-- pushed every rank after it up by one 10-point step; flag if
+			-- you actually wanted this to stay a flat 60
+			nextFactionPoints = 70
 		},
 		[FACTION_MPF] = {
 			ranks = {
@@ -93,25 +98,28 @@ function Schema:BuildCivicLadders()
 
 	-- Conscript player models have an "epaulettes" bodygroup that visually
 	-- tracks rank - starts at 1 for the default Private class, going up by
-	-- 1 each rank, capping at 12 for the top rank (General of the Combine
+	-- 1 each rank, capping at 13 for the top rank (General of the Combine
 	-- Conscript Forces) with nothing beyond that, same as civic points
 	-- themselves just stop mattering once you're at the top of the ladder.
 	-- Keyed by class rather than incremented step-by-step so it can't get
 	-- out of sync if a promotion ever skips ranks (e.g. a big points
 	-- award landing a Private straight at a much higher rank in one go).
+	-- This same table also doubles as a general "rank position" lookup for
+	-- Schema:GrantConscriptRankItems below.
 	self.conscriptEpaulettes = {
 		[CLASS_CONSCRIPT_PVT] = 1,
 		[CLASS_CONSCRIPT_PFC] = 2,
-		[CLASS_CONSCRIPT_CPL] = 3,
-		[CLASS_CONSCRIPT_SGT] = 4,
-		[CLASS_CONSCRIPT_SSGT] = 5,
-		[CLASS_CONSCRIPT_MSGT] = 6,
-		[CLASS_CONSCRIPT_LT] = 7,
-		[CLASS_CONSCRIPT_CPT] = 8,
-		[CLASS_CONSCRIPT_MAJ] = 9,
-		[CLASS_CONSCRIPT_COL] = 10,
-		[CLASS_CONSCRIPT_GEN] = 11,
-		[CLASS_CONSCRIPT_GOCCF] = 12
+		[CLASS_CONSCRIPT_SPC] = 3,
+		[CLASS_CONSCRIPT_CPL] = 4,
+		[CLASS_CONSCRIPT_SGT] = 5,
+		[CLASS_CONSCRIPT_SSGT] = 6,
+		[CLASS_CONSCRIPT_MSGT] = 7,
+		[CLASS_CONSCRIPT_LT] = 8,
+		[CLASS_CONSCRIPT_CPT] = 9,
+		[CLASS_CONSCRIPT_MAJ] = 10,
+		[CLASS_CONSCRIPT_COL] = 11,
+		[CLASS_CONSCRIPT_GEN] = 12,
+		[CLASS_CONSCRIPT_GOCCF] = 13
 	}
 end
 
@@ -171,6 +179,42 @@ if (SERVER) then
 		character:SetName("AW:SCN:" .. number)
 	end
 
+	--- Grants a one-time item reward the first time a Conscript character reaches (or, via a big
+	-- points jump, passes straight over) a given rank - flagKey guards against granting it again on
+	-- a later promotion or character load. Uses the character's current rank POSITION
+	-- (Schema.conscriptEpaulettes) rather than an exact class match, so a promotion that skips
+	-- ranks in one jump still grants it. Drops the item on the ground if the inventory is full.
+	-- @realm server
+	function Schema:GrantRankItem(character, flagKey, requiredClass, itemUniqueID)
+		if (character:GetData(flagKey)) then
+			return
+		end
+
+		local rankValue = self.conscriptEpaulettes[character:GetClass()]
+		local requiredValue = self.conscriptEpaulettes[requiredClass]
+
+		if (!rankValue or !requiredValue or rankValue < requiredValue) then
+			return
+		end
+
+		character:SetData(flagKey, true)
+
+		local client = character:GetPlayer()
+
+		if (IsValid(client) and !character:GetInventory():Add(itemUniqueID)) then
+			ix.item.Spawn(itemUniqueID, client)
+		end
+	end
+
+	--- Checks all of the Conscript rank-reward items a character might now qualify for. Safe to call
+	-- repeatedly (on every promotion AND on every character load) since GrantRankItem's own flag
+	-- stops any of them from being granted twice.
+	-- @realm server
+	function Schema:GrantConscriptRankItems(character)
+		self:GrantRankItem(character, "grantedBlackBeret", CLASS_CONSCRIPT_CPL, "conscript_beret_black")
+		self:GrantRankItem(character, "grantedRedBeret", CLASS_CONSCRIPT_LT, "conscript_beret_red")
+	end
+
 	--- Adds (or removes, with a negative amount) civic points on a character, then checks for a promotion.
 	-- @realm server
 	function Schema:AddCivicPoints(character, amount)
@@ -223,6 +267,10 @@ if (SERVER) then
 			-- Schema.conscriptEpaulettes above) to match the new rank
 			-- immediately, rather than waiting for the next respawn
 			self:ReapplyOutfitBodygroups(client)
+
+			if (character:GetFaction() == FACTION_CONSCRIPT) then
+				self:GrantConscriptRankItems(character)
+			end
 
 			client:Notify("You have been promoted!")
 		end
