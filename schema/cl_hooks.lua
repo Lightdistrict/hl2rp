@@ -63,7 +63,14 @@ end
 local COMMAND_PREFIX = "/"
 
 function Schema:ChatTextChanged(text)
-	if (LocalPlayer():IsCombine() or LocalPlayer():Team() == FACTION_OVERWATCH) then
+	-- IsCombine() only covers MPF/OTA - Overwatch was already special-cased
+	-- here alongside it, same reason Conscript needs to be too (see the
+	-- matching CanHearRadioBeep helper server-side in sv_hooks.lua, which
+	-- this client-side gate has to mirror or the server never even gets a
+	-- PlayerChatTextChanged netstream message to react to for Conscripts)
+	local client = LocalPlayer()
+
+	if (client:IsCombine() or client:Team() == FACTION_OVERWATCH or client:Team() == FACTION_CONSCRIPT) then
 		local key = nil
 
 		if (text == COMMAND_PREFIX .. "radio " or text == COMMAND_PREFIX .. "r ") then
