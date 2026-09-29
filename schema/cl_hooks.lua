@@ -392,8 +392,6 @@ Schema.previewWeaponOffsets = Schema.previewWeaponOffsets or {
 	["tfa_hl2r_ar2"] = {pos = Vector(-2.00, 16.00, 0.00), ang = Angle(0.00, 180.00, 270.00)},
 	["weapon_csniper_tfa2"] = {pos = Vector(2.00, 5.00, 5.00), ang = Angle(20.00, 195.00, 275.00)},
 	["tfa_hl2r_rpg"] = {pos = Vector(14.00, 0.00, 0.00), ang = Angle(0.00, 180.00, 0.00)},
-	-- all zeros - confirmed to already look right with no correction
-	["ix_keys"] = {pos = Vector(0.00, 0.00, 0.00), ang = Angle(0.00, 0.00, 0.00)},
 	["tfa_hl2_oicw"] = {pos = Vector(15.00, 0.00, 0.00), ang = Angle(0.00, 180.00, 0.00)}
 }
 
