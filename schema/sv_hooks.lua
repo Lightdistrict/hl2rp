@@ -772,8 +772,18 @@ function Schema:PlayerSpray(client)
 	return true
 end
 
+-- IsCombine() only covers MPF/OTA (it's used in ~30 other places for
+-- things like door access, restraints, and water/supplement
+-- restrictions, so it's not something to broaden lightly) - Overwatch was
+-- already special-cased here alongside it for the same reason Conscripts
+-- need to be: neither is "combine" by that definition, but both should
+-- still get the radio typing beep like MPF/OTA do.
+local function CanHearRadioBeep(client)
+	return client:IsCombine() or client:Team() == FACTION_OVERWATCH or client:Team() == FACTION_CONSCRIPT
+end
+
 netstream.Hook("PlayerChatTextChanged", function(client, key)
-	if ((client:IsCombine() or client:Team() == FACTION_OVERWATCH) and !client.bTypingBeep
+	if (CanHearRadioBeep(client) and !client.bTypingBeep
 	and (key == "y" or key == "w" or key == "r" or key == "t")) then
 		client:EmitSound("NPC_MetroPolice.Radio.On")
 		client.bTypingBeep = true
@@ -781,7 +791,7 @@ netstream.Hook("PlayerChatTextChanged", function(client, key)
 end)
 
 netstream.Hook("PlayerFinishChat", function(client)
-	if ((client:IsCombine() or client:Team() == FACTION_OVERWATCH) and client.bTypingBeep) then
+	if (CanHearRadioBeep(client) and client.bTypingBeep) then
 		client:EmitSound("NPC_MetroPolice.Radio.Off")
 		client.bTypingBeep = nil
 	end
