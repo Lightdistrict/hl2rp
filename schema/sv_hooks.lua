@@ -252,6 +252,25 @@ function Schema:ReapplyOutfitBodygroups(client)
 	end
 end
 
+-- Plays an MP3 (which Source's classic EmitSound can't decode - see
+-- Schema:EmitFootstepSound above) to everyone standing near the given
+-- player, for positional equip/unequip-style sounds others should hear
+-- happen nearby. For a sound meant for the player alone (no one else),
+-- just call netstream.Start(client, "PlaySound", path) directly instead.
+function Schema:EmitNearbyMP3(client, path, range)
+	range = range or ix.config.Get("chatRange", 280)
+
+	local recipients = {}
+
+	for _, ply in ipairs(player.GetAll()) do
+		if ((ply:GetPos() - client:GetPos()):LengthSqr() <= (range * range)) then
+			recipients[#recipients + 1] = ply
+		end
+	end
+
+	netstream.Start(recipients, "PlaySound", path)
+end
+
 -- Maps a traced surfaceprop name to one of our footstep sound categories.
 -- Source surfaceprops vary a lot by content pack (e.g. "wood.plank" vs
 -- "wood"), so this matches by substring rather than requiring an exact
