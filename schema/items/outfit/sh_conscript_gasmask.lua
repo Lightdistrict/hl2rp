@@ -79,6 +79,19 @@ function ITEM:OnEquipped()
 	Schema:ReapplyOutfitBodygroups(self.player)
 end
 
+-- OnEquipped only fires when the mask is actively equipped through the
+-- inventory menu - if it was ALREADY equipped from a previous session
+-- (loading into a character that has it on, or switching to one), that
+-- never happens, so the breathing loop never started even though the
+-- bodygroup/armor-style persistence already correctly shows it equipped.
+-- Restart it here too, same as how the helmet/vest re-add their armor
+-- on every loadout.
+function ITEM:OnLoadout()
+	if (self:GetData("equip") and IsValid(self.player) and self.player:GetCharacter()) then
+		ScheduleBreath(self.player, self, self.player:GetCharacter():GetID())
+	end
+end
+
 function ITEM:OnUnequipped()
 	Schema:EmitNearbyMP3(self.player, UNEQUIP_SOUND)
 	timer.Remove("ixhl2rpGasmaskBreath" .. self.player:EntIndex())
