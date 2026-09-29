@@ -105,6 +105,12 @@ function Schema:PrePlayerLoadedCharacter(client, character, oldCharacter)
 	if (IsValid(client.ixScanner)) then
 		client.ixScanner:Remove()
 	end
+
+	-- stop any gas mask breathing loop from the character being switched
+	-- away from (deleted, or just swapped) - the timer's own character-ID
+	-- check (sh_conscript_gasmask.lua) would eventually catch this too,
+	-- but only after its next 3-5s cycle, so stop it immediately here
+	timer.Remove("ixhl2rpGasmaskBreath" .. client:EntIndex())
 end
 
 function Schema:PlayerLoadedCharacter(client, character, oldCharacter)

@@ -46,22 +46,33 @@ end
 -- true for things with their own :IsValid() method (entities, panels),
 -- so IsValid(item) was ALWAYS false here and made this bail out before
 -- ever playing a sound. Just check it's non-nil instead.
-local function ScheduleBreath(client, item)
+--
+-- characterID pins this loop to the SPECIFIC character that equipped the
+-- mask - Schema:PrePlayerLoadedCharacter (sv_hooks.lua) already stops
+-- this timer immediately on any character switch/delete, but this check
+-- is a second line of defense: if a stale timer somehow survives (e.g.
+-- the OLD item's own :GetData("equip") flag stayed true in memory after
+-- the character that owned it was gone), it stops itself the moment the
+-- player's CURRENT character no longer matches, rather than continuing
+-- to breathe into a brand new character that never equipped anything.
+local function ScheduleBreath(client, item, characterID)
 	local timerName = "ixhl2rpGasmaskBreath" .. client:EntIndex()
 
 	timer.Create(timerName, math.random(3, 5), 1, function()
-		if (!IsValid(client) or !item or !item:GetData("equip")) then
+		local character = IsValid(client) and client:GetCharacter()
+
+		if (!character or character:GetID() != characterID or !item or !item:GetData("equip")) then
 			return
 		end
 
 		netstream.Start({client}, "PlaySound", BREATH_SOUNDS[math.random(#BREATH_SOUNDS)])
-		ScheduleBreath(client, item)
+		ScheduleBreath(client, item, characterID)
 	end)
 end
 
 function ITEM:OnEquipped()
 	Schema:EmitNearbyMP3(self.player, EQUIP_SOUND)
-	ScheduleBreath(self.player, self)
+	ScheduleBreath(self.player, self, self.player:GetCharacter():GetID())
 
 	-- base_outfit doesn't touch other equipped outfit items' bodygroups on
 	-- equip, but this re-syncs them anyway in case that ever changes
