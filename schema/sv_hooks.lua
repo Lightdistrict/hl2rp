@@ -75,6 +75,17 @@ function Schema:PostPlayerLoadout(client)
 	-- on every loadout to fix that.
 	Schema:ReapplyOutfitBodygroups(client)
 
+	-- same idea for armor - recompute the total from scratch on every
+	-- loadout instead of trusting a per-item running total (see
+	-- Schema:ReapplyOutfitArmor above for why the old approach could
+	-- stack past the intended amount). Runs before the IsCombine() block
+	-- below on purpose: for MPF/OTA (which don't currently have any
+	-- armor-granting outfit items) this computes 0 and gets immediately
+	-- overwritten by that block's own hardcoded value; for Conscripts
+	-- (not covered by IsCombine at all) this is the only thing setting
+	-- their armor, so it needs to run either way.
+	Schema:ReapplyOutfitArmor(client)
+
 	if (client:IsCombine()) then
 		if (client:Team() == FACTION_OTA) then
 			client:SetMaxHealth(150)
@@ -279,6 +290,39 @@ function Schema:ReapplyOutfitBodygroups(client)
 			end
 		end
 	end
+end
+
+-- The helmet/vest (and any future armor-granting outfit item) used to add
+-- their own maxArmor with SetArmor(Armor() + maxArmor) on equip and every
+-- loadout, and subtract it on unequip. That's only correct if OnLoadout
+-- fires EXACTLY once per item per spawn - if it ever fires more than that
+-- (which is what was happening: reloading into a character with both
+-- already equipped ended up well over the intended 100), the additions
+-- just kept stacking with no way to self-correct.
+--
+-- This recomputes the total from scratch instead: sum every currently-
+-- equipped item's own maxArmor and SET the player's armor to that exact
+-- total. Being an idempotent "set" rather than a repeatable "add" means
+-- calling this any number of times in a row - once, twice, or on every
+-- one of several OnLoadout firings - always converges on the same
+-- correct number instead of accumulating.
+function Schema:ReapplyOutfitArmor(client)
+	local character = client:GetCharacter()
+	local inventory = character and character:GetInventory()
+
+	if (!character or !inventory) then
+		return
+	end
+
+	local total = 0
+
+	for item in inventory:Iter() do
+		if (item:GetData("equip") and isnumber(item.maxArmor)) then
+			total = total + item.maxArmor
+		end
+	end
+
+	client:SetArmor(total)
 end
 
 -- Plays an MP3 (which Source's classic EmitSound can't decode - see

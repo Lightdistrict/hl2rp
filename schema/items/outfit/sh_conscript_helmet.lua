@@ -26,13 +26,15 @@ function ITEM:CanEquipOutfit()
 	return models != nil and table.HasValue(models, self.player:GetModel())
 end
 
--- Armor here is a flat add/remove-on-toggle bonus rather than a tracked,
--- degrading pool, so that multiple armor pieces (helmet, vest, etc.) stack
--- cleanly regardless of order - each equipped piece just contributes its
--- own maxArmor to the player's current total.
+-- Armor is recomputed from scratch (Schema:ReapplyOutfitArmor) rather than
+-- added/subtracted here directly - see that function in sv_hooks.lua for
+-- why a running total could stack past the intended amount across
+-- multiple loadouts. Multiple armor pieces (helmet, vest, etc.) still
+-- stack cleanly regardless of order, since the recompute sums every
+-- currently-equipped item's own maxArmor every time.
 function ITEM:OnEquipped()
-	self.player:SetArmor(self.player:Armor() + self.maxArmor)
 	self.player:EmitSound(EQUIP_SOUND, 60, 100, 0.5)
+	Schema:ReapplyOutfitArmor(self.player)
 
 	-- base_outfit doesn't touch other equipped outfit items' bodygroups on
 	-- equip, but this re-syncs them anyway in case that ever changes
@@ -40,19 +42,13 @@ function ITEM:OnEquipped()
 end
 
 function ITEM:OnUnequipped()
-	self.player:SetArmor(math.max(self.player:Armor() - self.maxArmor, 0))
 	self.player:EmitSound(EQUIP_SOUND, 60, 100, 0.5)
+	Schema:ReapplyOutfitArmor(self.player)
 
 	-- base_outfit's RemoveOutfit just called client:ResetBodygroups(), which
 	-- wipes every other currently-equipped outfit item's bodygroup too (see
 	-- Schema:ReapplyOutfitBodygroups in sv_hooks.lua) - put them back
 	Schema:ReapplyOutfitBodygroups(self.player)
-end
-
-function ITEM:OnLoadout()
-	if (self:GetData("equip")) then
-		self.player:SetArmor(self.player:Armor() + self.maxArmor)
-	end
 end
 
 -- the dropped world-model entity doesn't know about ITEM.bodyGroups on its

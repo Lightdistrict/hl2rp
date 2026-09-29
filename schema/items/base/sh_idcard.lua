@@ -31,6 +31,18 @@ function ITEM:GetDescription()
 	return self.cardTitle..". "..self:GetCardDetails()
 end
 
+-- noDrop above only blocks dropping the card directly - it does nothing
+-- to stop moving it into a bag's own sub-inventory and dropping THAT
+-- (a completely normal, droppable item), which would let the ID leave
+-- the player's reach anyway. Block transferring into any bag.
+function ITEM:CanTransfer(oldInventory, newInventory)
+	if (newInventory and newInventory.vars and newInventory.vars.isBag) then
+		return false
+	end
+
+	return true
+end
+
 ITEM.functions.Show = {
 	name = "show",
 	tip = "showIDTip",
