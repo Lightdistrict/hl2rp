@@ -388,7 +388,8 @@ Schema.previewWeaponOffsets = Schema.previewWeaponOffsets or {
 	["tfa_hl2r_shotgun"] = {pos = Vector(14.00, 0.00, 0.00), ang = Angle(0.00, 180.00, 0.00)},
 	["tfa_hl2r_357"] = {pos = Vector(3.00, 0.00, 0.00), ang = Angle(0.00, 180.00, 0.00)},
 	["tfa_hl2r_smg1"] = {pos = Vector(7.00, 0.00, 2.00), ang = Angle(0.00, 0.00, 0.00)},
-	["tfa_hl2r_pistol"] = {pos = Vector(-1.00, 3.00, -2.00), ang = Angle(0.00, 180.00, 270.00)}
+	["tfa_hl2r_pistol"] = {pos = Vector(-1.00, 3.00, -2.00), ang = Angle(0.00, 180.00, 270.00)},
+	["tfa_hl2r_ar2"] = {pos = Vector(-2.00, 16.00, 0.00), ang = Angle(0.00, 180.00, 270.00)}
 }
 
 local PREVIEW_WEAPON_ATTACHMENT = "anim_attachment_RH"
