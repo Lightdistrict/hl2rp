@@ -253,7 +253,7 @@ do
 		end
 
 		for _, v in ipairs(character:GetInventory():GetItemsByUniqueID("combine_radio", true)) do
-			if (v:GetData("enabled", false) and v:GetData("channel", 1) == data.channel) then
+			if (v:GetData("enabled", false) and v:GetData("equip", false) and v:GetData("channel", 1) == data.channel) then
 				return true
 			end
 		end

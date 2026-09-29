@@ -52,7 +52,7 @@ do
 		local item
 
 		for k, v in ipairs(radios) do
-			if (v:GetData("enabled", false)) then
+			if (v:GetData("enabled", false) and v:GetData("equip", false)) then
 				item = v
 				break
 			end
