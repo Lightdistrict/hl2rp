@@ -352,3 +352,72 @@ netstream.Hook("ViewObjectives", function(data)
 	Schema:AddCombineDisplayMessage("@cViewObjectives")
 	vgui.Create("ixViewObjectives"):Populate(data)
 end)
+
+-- Helix's stock ixModelPanel (core/derma/cl_modelpanel.lua) calls
+-- hook.Run("DrawHelixModelView", self, self.Entity) / "PostDrawHelixModelView"
+-- during its own DrawModel() - a real, built-in extension point for drawing
+-- extra things onto a model preview, distinct from (and much safer than)
+-- the icon panel patching attempted and abandoned above. The inventory
+-- tab's character preview (uirework_inventory's cl_inventory.lua) already
+-- copies the live player's bodygroups/submaterials onto its preview entity
+-- every frame via its own LayoutEntity override - that's why clothing
+-- shows correctly there - but nothing copies over a held weapon, since
+-- weapons aren't bodygroups, they're a separate world model attached at a
+-- hand bone/attachment point.
+--
+-- This attaches the local player's CURRENT weapon's world model to the
+-- preview entity's right-hand attachment ("anim_attachment_RH", the
+-- standard HL2/Source biped weapon-hold attachment - present on stock HL2
+-- citizen/combine skeletons, which the Conscript models are built on).
+-- The exact position/angle a weapon looks right at can vary per weapon
+-- model and may need a small per-model offset adjustment once you can
+-- actually see it in-game - tell me if a particular gun looks rotated or
+-- offset and I'll add a correction for that one.
+local PREVIEW_WEAPON_ATTACHMENT = "anim_attachment_RH"
+local previewWeaponEntity
+
+local function GetPreviewWeaponEntity(model)
+	if (!IsValid(previewWeaponEntity) or previewWeaponEntity:GetModel() != model) then
+		if (IsValid(previewWeaponEntity)) then
+			previewWeaponEntity:Remove()
+		end
+
+		previewWeaponEntity = ClientsideModel(model, RENDERGROUP_OPAQUE)
+
+		if (IsValid(previewWeaponEntity)) then
+			previewWeaponEntity:SetNoDraw(true)
+		end
+	end
+
+	return previewWeaponEntity
+end
+
+hook.Add("DrawHelixModelView", "ixhl2rpPreviewHeldWeapon", function(panel, entity)
+	local weapon = LocalPlayer():GetActiveWeapon()
+
+	if (!IsValid(weapon) or !IsValid(entity)) then
+		return
+	end
+
+	local worldModel = weapon:GetWorldModel()
+
+	if (!worldModel or worldModel == "") then
+		return
+	end
+
+	local weaponEntity = GetPreviewWeaponEntity(worldModel)
+
+	if (!IsValid(weaponEntity)) then
+		return
+	end
+
+	local attachmentID = entity:LookupAttachment(PREVIEW_WEAPON_ATTACHMENT)
+	local attachment = attachmentID > 0 and entity:GetAttachment(attachmentID)
+
+	if (attachment) then
+		weaponEntity:SetPos(attachment.Pos)
+		weaponEntity:SetAngles(attachment.Ang)
+	end
+
+	weaponEntity:DrawModel()
+end)
