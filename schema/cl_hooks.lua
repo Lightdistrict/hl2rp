@@ -399,6 +399,16 @@ hook.Add("DrawHelixModelView", "ixhl2rpPreviewHeldWeapon", function(panel, entit
 		return
 	end
 
+	-- enableHook (below) makes DrawHelixModelView fire on EVERY ixModelPanel,
+	-- not just this one inventory preview (character creation, scoreboard,
+	-- etc. all use the same panel class) - only draw a weapon on a preview
+	-- that's actually showing the local player's own current model, so
+	-- other previews (a different model being previewed, or someone else's)
+	-- don't get a weapon that doesn't belong there
+	if (entity:GetModel() != LocalPlayer():GetModel()) then
+		return
+	end
+
 	local worldModel = weapon:GetWorldModel()
 
 	if (!worldModel or worldModel == "") then
@@ -421,3 +431,24 @@ hook.Add("DrawHelixModelView", "ixhl2rpPreviewHeldWeapon", function(panel, entit
 
 	weaponEntity:DrawModel()
 end)
+
+-- ixModelPanel's own DrawModel (core/derma/cl_modelpanel.lua) only calls
+-- hook.Run("DrawHelixModelView"/"PostDrawHelixModelView", ...) when
+-- self.enableHook is true - and nothing in this schema or the
+-- uirework_inventory plugin ever sets that on the inventory preview panel,
+-- so the hook above never actually ran. Rather than guess at re-
+-- implementing DrawModel's rendering logic (the kind of blind panel
+-- patching that broke the inventory icon earlier this session), just force
+-- enableHook on before calling the real, unmodified method - the ONLY
+-- thing this changes is whether that one already-designed extension point
+-- fires, nothing about how any panel actually renders.
+local modelPanelTable = vgui.GetControlTable("ixModelPanel")
+
+if (modelPanelTable and modelPanelTable.DrawModel) then
+	local BaseDrawModel = modelPanelTable.DrawModel
+
+	function modelPanelTable:DrawModel()
+		self.enableHook = true
+		BaseDrawModel(self)
+	end
+end
