@@ -409,7 +409,11 @@ hook.Add("DrawHelixModelView", "ixhl2rpPreviewHeldWeapon", function(panel, entit
 		return
 	end
 
-	local worldModel = weapon:GetWorldModel()
+	-- GetWorldModel() isn't a real method on Weapon - the correct one is
+	-- GetWeaponWorldModel() (confirmed via the GMod wiki after the wrong
+	-- name errored live: "attempt to call method 'GetWorldModel' (a nil
+	-- value)")
+	local worldModel = weapon:GetWeaponWorldModel()
 
 	if (!worldModel or worldModel == "") then
 		return
