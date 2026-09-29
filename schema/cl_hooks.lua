@@ -70,22 +70,13 @@ function Schema:ChatTextChanged(text)
 	-- PlayerChatTextChanged netstream message to react to for Conscripts)
 	local client = LocalPlayer()
 
-	if (client:IsCombine() or client:Team() == FACTION_OVERWATCH or client:Team() == FACTION_CONSCRIPT) then
-		local key = nil
-
-		if (text == COMMAND_PREFIX .. "radio " or text == COMMAND_PREFIX .. "r ") then
-			key = "r"
-		elseif (text == COMMAND_PREFIX .. "w ") then
-			key = "w"
-		elseif (text == COMMAND_PREFIX .. "y ") then
-			key = "y"
-		elseif (text:sub(1, 1):match("%w")) then
-			key = "t"
-		end
-
-		if (key) then
-			netstream.Start("PlayerChatTextChanged", key)
-		end
+	-- only /radio and /r should make the radio-typing noise - this used to
+	-- also fire for /w, /y, and even plain IC talk (any message starting
+	-- with a letter matched the old catch-all branch), which is why saying
+	-- something as ordinary as "hi" was incorrectly beeping
+	if ((client:IsCombine() or client:Team() == FACTION_OVERWATCH or client:Team() == FACTION_CONSCRIPT)
+	and (text == COMMAND_PREFIX .. "radio " or text == COMMAND_PREFIX .. "r ")) then
+		netstream.Start("PlayerChatTextChanged", "r")
 	end
 end
 

@@ -802,9 +802,11 @@ local function CanHearRadioBeep(client)
 	return client:IsCombine() or client:Team() == FACTION_OVERWATCH or client:Team() == FACTION_CONSCRIPT
 end
 
+-- the client now only ever sends "r" (for /radio or /r - see
+-- Schema:ChatTextChanged in cl_hooks.lua), not "y"/"w"/"t" anymore, but
+-- checking the key explicitly here still matters as defense in depth
 netstream.Hook("PlayerChatTextChanged", function(client, key)
-	if (CanHearRadioBeep(client) and !client.bTypingBeep
-	and (key == "y" or key == "w" or key == "r" or key == "t")) then
+	if (CanHearRadioBeep(client) and !client.bTypingBeep and key == "r") then
 		client:EmitSound("NPC_MetroPolice.Radio.On")
 		client.bTypingBeep = true
 	end
