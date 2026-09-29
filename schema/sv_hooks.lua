@@ -266,7 +266,10 @@ function Schema:ReapplyOutfitBodygroups(client)
 	end
 
 	for item in inventory:Iter() do
-		if (item:GetData("equip") and istable(item.bodyGroups)) then
+		-- most items need GetData("equip") (an actual equip/unequip action
+		-- - clothing, the combine radio); a few (the backpack) show their
+		-- bodygroup just from being owned at all, no equip step involved
+		if (istable(item.bodyGroups) and (item:GetData("equip") or item.alwaysShowBodyGroups)) then
 			for name, value in pairs(item.bodyGroups) do
 				local index = client:FindBodygroupByName(name)
 
