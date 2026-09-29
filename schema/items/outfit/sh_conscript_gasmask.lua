@@ -21,12 +21,19 @@ for i = 1, 6 do
 end
 
 -- only equippable while on one of the current faction's actual models -
--- otherwise the face bodygroup change has nothing to apply to
+-- otherwise the face bodygroup change has nothing to apply to. Also
+-- mutually exclusive with glasses/aviators - a full-face mask like the
+-- M40 covers your eyes with its own lens, so glasses wouldn't fit under
+-- or show through it anyway.
 function ITEM:CanEquipOutfit()
 	local faction = ix.faction.Get(self.player:Team())
 	local models = faction and faction:GetModels(self.player)
 
-	return models != nil and table.HasValue(models, self.player:GetModel())
+	if (models == nil or !table.HasValue(models, self.player:GetModel())) then
+		return false
+	end
+
+	return !Schema:IsOutfitCategoryEquipped(self.player, "glasses")
 end
 
 -- Reschedules itself with a fresh random delay each time for a more

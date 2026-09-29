@@ -271,6 +271,28 @@ function Schema:EmitNearbyMP3(client, path, range)
 	netstream.Start(recipients, "PlaySound", path)
 end
 
+-- Checks whether the player currently has ANY item of the given
+-- outfitCategory equipped - used to make two DIFFERENT categories
+-- mutually exclusive (e.g. a gas mask and glasses), which base_outfit's
+-- own same-category check (in its Equip.OnRun) can't do since it only
+-- ever compares an item against others sharing its own outfitCategory.
+function Schema:IsOutfitCategoryEquipped(client, category)
+	local character = client:GetCharacter()
+	local inventory = character and character:GetInventory()
+
+	if (!inventory) then
+		return false
+	end
+
+	for item in inventory:Iter() do
+		if (item.outfitCategory == category and item:GetData("equip")) then
+			return true
+		end
+	end
+
+	return false
+end
+
 -- Maps a traced surfaceprop name to one of our footstep sound categories.
 -- Source surfaceprops vary a lot by content pack (e.g. "wood.plank" vs
 -- "wood"), so this matches by substring rather than requiring an exact
