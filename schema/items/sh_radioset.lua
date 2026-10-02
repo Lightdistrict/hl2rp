@@ -135,33 +135,39 @@ end
 -- finish); anything shorter means E was tapped and released early -
 -- treat that as the on/off toggle instead
 function ITEM:OnEntityCreated(entity)
-	local baseUse = entity.Use
+	-- OnEntityCreated can fire more than once for the same entity - without
+	-- this guard, each extra firing would capture our OWN previous wrapper
+	-- as "baseUse" and wrap it again, nesting deeper every time until
+	-- Use() unwound through all those layers and overflowed the stack
+	if (!entity.ixRadioBaseUse) then
+		entity.ixRadioBaseUse = entity.Use
 
-	function entity:Use(activator, caller)
-		local pickupTime = ix.config.Get("itemPickupTime", 0.5)
+		function entity:Use(activator, caller)
+			local pickupTime = ix.config.Get("itemPickupTime", 0.5)
 
-		if (!self.ixRadioUseStart) then
-			self.ixRadioUseStart = CurTime()
-			self.ixRadioUseCaller = caller
+			if (!self.ixRadioUseStart) then
+				self.ixRadioUseStart = CurTime()
+				self.ixRadioUseCaller = caller
 
-			timer.Simple(pickupTime, function()
-				if (!IsValid(self) or !self.ixRadioUseStart) then
-					return
-				end
+				timer.Simple(pickupTime, function()
+					if (!IsValid(self) or !self.ixRadioUseStart) then
+						return
+					end
 
-				local heldRecently = (CurTime() - (self.ixRadioLastUse or 0)) < 0.15
+					local heldRecently = (CurTime() - (self.ixRadioLastUse or 0)) < 0.15
 
-				self.ixRadioUseStart = nil
+					self.ixRadioUseStart = nil
 
-				if (!heldRecently and IsValid(self.ixRadioUseCaller)) then
-					ToggleRadioSet(self, self.ixRadioUseCaller)
-				end
-			end)
+					if (!heldRecently and IsValid(self.ixRadioUseCaller)) then
+						ToggleRadioSet(self, self.ixRadioUseCaller)
+					end
+				end)
+			end
+
+			self.ixRadioLastUse = CurTime()
+
+			return self.ixRadioBaseUse(self, activator, caller)
 		end
-
-		self.ixRadioLastUse = CurTime()
-
-		return baseUse(self, activator, caller)
 	end
 
 	-- covers a radio restored still "on" after a server restart, same
