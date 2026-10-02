@@ -12,7 +12,7 @@ ITEM.bodyGroups = {
 	["vest"] = 2
 }
 
-local EQUIP_SOUND = "foley/inventory/inv_move6.wav"
+local EQUIP_SOUND = "foley/inventory/inv_move2.wav"
 
 -- only equippable while on one of the current faction's actual models -
 -- otherwise the vest bodygroup change has nothing to apply to

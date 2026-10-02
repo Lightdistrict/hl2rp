@@ -57,6 +57,8 @@ local function PlayRadioChirp(client, sound)
 	netstream.Start(recipients, "PlaySound", sound)
 end
 
+local EQUIP_SOUND = "foley/inventory/inv_move2.wav"
+
 -- Equipping is what makes the radio show on the player's own model (the
 -- "radio" bodygroup above) - split the same way base_outfit splits
 -- Equip/EquipUn, and using the same tip/icon keys so it fits right in
@@ -70,6 +72,7 @@ ITEM.functions.Equip = {
 	end,
 	OnRun = function(itemTable)
 		itemTable:SetData("equip", true)
+		itemTable.player:EmitSound(EQUIP_SOUND, 60, 100, 0.5)
 		Schema:ReapplyOutfitBodygroups(itemTable.player)
 
 		return false
@@ -85,6 +88,7 @@ ITEM.functions.EquipUn = {
 	end,
 	OnRun = function(itemTable)
 		itemTable:SetData("equip", false)
+		itemTable.player:EmitSound(EQUIP_SOUND, 60, 100, 0.5)
 		Schema:ReapplyOutfitBodygroups(itemTable.player)
 
 		return false
