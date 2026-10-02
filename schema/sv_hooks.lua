@@ -898,3 +898,11 @@ netstream.Hook("ViewObjectivesUpdate", function(client, text)
 		Schema:AddCombineDisplayMessage("@cViewObjectivesFiller", nil, client, date:spanseconds())
 	end
 end)
+
+-- actual handling lives in Schema:HandleRadioSetReportLength
+-- (schema/items/sh_radioset.lua) - registered here rather than in the item
+-- file itself because items load (via ix.item.Register) before the
+-- thirdparty netstream lib is included, so netstream is still nil at that point
+netstream.Hook("ixRadioSetReportLength", function(client, itemID, length)
+	Schema:HandleRadioSetReportLength(client, itemID, length)
+end)

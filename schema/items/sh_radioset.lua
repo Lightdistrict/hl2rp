@@ -69,7 +69,11 @@ local function PlayNextBreenClip(itemID)
 	end)
 end
 
-netstream.Hook("ixRadioSetReportLength", function(client, itemID, length)
+-- called from schema/sv_hooks.lua's "ixRadioSetReportLength" netstream.Hook -
+-- registering that netstream.Hook here directly would run at item-load time
+-- (via ix.item.Register), which happens before the thirdparty netstream lib
+-- is even included, so the hook has to live in sv_hooks.lua instead
+function Schema:HandleRadioSetReportLength(client, itemID, length)
 	local state = activeLoops[itemID]
 
 	if (!state or state.reported) then
@@ -82,7 +86,7 @@ netstream.Hook("ixRadioSetReportLength", function(client, itemID, length)
 	timer.Create("ixhl2rpRadioSetNext"..itemID, math.Clamp(length or FALLBACK_CLIP_LENGTH, 1, 120), 1, function()
 		PlayNextBreenClip(itemID)
 	end)
-end)
+end
 
 local function StartBreenLoop(entity, itemTable)
 	local itemID = itemTable:GetID()
