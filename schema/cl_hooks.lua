@@ -340,6 +340,8 @@ local radioSetStations = {}
 local radioSetGeneration = {}
 
 netstream.Hook("ixRadioSetPlay", function(itemID, soundPath)
+	print("[RADIOSET DEBUG] client received ixRadioSetPlay itemID="..itemID.." path="..soundPath)
+
 	if (IsValid(radioSetStations[itemID])) then
 		radioSetStations[itemID]:Stop()
 		radioSetStations[itemID] = nil
@@ -355,6 +357,7 @@ netstream.Hook("ixRadioSetPlay", function(itemID, soundPath)
 		end
 
 		if (radioSetGeneration[itemID] != generation) then
+			print("[RADIOSET DEBUG] clip for itemID="..itemID.." finished loading but was superseded - stopping it")
 			station:Stop()
 
 			return
@@ -367,6 +370,8 @@ netstream.Hook("ixRadioSetPlay", function(itemID, soundPath)
 end)
 
 netstream.Hook("ixRadioSetStop", function(itemID)
+	print("[RADIOSET DEBUG] client received ixRadioSetStop itemID="..itemID.." had station="..tostring(IsValid(radioSetStations[itemID])))
+
 	if (IsValid(radioSetStations[itemID])) then
 		radioSetStations[itemID]:Stop()
 	end

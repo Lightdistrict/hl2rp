@@ -114,9 +114,12 @@ local function StopBreenLoop(itemTable)
 	-- on its own otherwise, so explicitly tell them to cut it off too
 	if (state and IsValid(state.entity)) then
 		local range = ix.config.Get("chatRange", 280)
+		local recipients = NearbyPlayers(state.entity:GetPos(), range)
 
-		netstream.Start(NearbyPlayers(state.entity:GetPos(), range), "ixRadioSetStop", itemID)
+		print("[RADIOSET DEBUG] StopBreenLoop itemID="..itemID.." sending stop to "..#recipients.." nearby players")
+		netstream.Start(recipients, "ixRadioSetStop", itemID)
 	else
+		print("[RADIOSET DEBUG] StopBreenLoop itemID="..itemID.." entity gone, broadcasting stop to everyone")
 		netstream.Start(player.GetAll(), "ixRadioSetStop", itemID)
 	end
 end
@@ -198,6 +201,8 @@ function ITEM:OnEntityCreated(entity)
 end
 
 function ITEM.postHooks.take(item, result)
+	print("[RADIOSET DEBUG] postHooks.take fired, result="..tostring(result)..", entity valid="..tostring(IsValid(item.entity)))
+
 	if (result == false) then
 		return
 	end
