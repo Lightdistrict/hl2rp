@@ -102,11 +102,23 @@ end
 
 local function StopBreenLoop(itemTable)
 	local itemID = itemTable:GetID()
+	local state = activeLoops[itemID]
 
 	activeLoops[itemID] = nil
 
 	timer.Remove("ixhl2rpRadioSetFallback"..itemID)
 	timer.Remove("ixhl2rpRadioSetNext"..itemID)
+
+	-- stopping the loop above only stops scheduling FUTURE clips - the one
+	-- already playing on each nearby client's own audio channel keeps going
+	-- on its own otherwise, so explicitly tell them to cut it off too
+	if (state and IsValid(state.entity)) then
+		local range = ix.config.Get("chatRange", 280)
+
+		netstream.Start(NearbyPlayers(state.entity:GetPos(), range), "ixRadioSetStop", itemID)
+	else
+		netstream.Start(player.GetAll(), "ixRadioSetStop", itemID)
+	end
 end
 
 local function ToggleRadioSet(entity, caller)
@@ -119,6 +131,14 @@ local function ToggleRadioSet(entity, caller)
 	local enabled = !itemTable:GetData("enabled", false)
 
 	itemTable:SetData("enabled", enabled)
+
+	-- a dropped item's own SetData isn't networked to clients that don't
+	-- own it (nobody owns an unowned world item), so the entity menu's
+	-- OnCanRun below - which runs CLIENT-SIDE - would always see the
+	-- default/false value no matter what. A plain networked entity var
+	-- actually replicates to everyone nearby, so that's what OnCanRun
+	-- checks instead; item data is still what's kept/restored on reload.
+	entity:SetNWBool("ixRadioEnabled", enabled)
 
 	local range = ix.config.Get("chatRange", 280)
 	local recipients = NearbyPlayers(entity:GetPos(), range)
@@ -147,7 +167,7 @@ end
 ITEM.functions.TurnOn = {
 	name = "Turn On",
 	OnCanRun = function(item)
-		return IsValid(item.entity) and !item:GetData("enabled", false)
+		return IsValid(item.entity) and !item.entity:GetNWBool("ixRadioEnabled", false)
 	end,
 	OnRun = function(item)
 		ToggleRadioSet(item.entity, item.player)
@@ -159,7 +179,7 @@ ITEM.functions.TurnOn = {
 ITEM.functions.TurnOff = {
 	name = "Turn Off",
 	OnCanRun = function(item)
-		return IsValid(item.entity) and item:GetData("enabled", false) == true
+		return IsValid(item.entity) and item.entity:GetNWBool("ixRadioEnabled", false) == true
 	end,
 	OnRun = function(item)
 		ToggleRadioSet(item.entity, item.player)
@@ -172,6 +192,7 @@ ITEM.functions.TurnOff = {
 -- of bug as the gas mask not resuming its breathing loop on load
 function ITEM:OnEntityCreated(entity)
 	if (self:GetData("enabled", false)) then
+		entity:SetNWBool("ixRadioEnabled", true)
 		StartBreenLoop(entity, self)
 	end
 end

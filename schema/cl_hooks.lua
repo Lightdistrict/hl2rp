@@ -325,16 +325,35 @@ end)
 
 -- same as "PlaySound" above, but also reports the clip's real length back
 -- to the server so the Radio Set item (schema/items/sh_radioset.lua) can
--- queue up the next random clip right as this one ends instead of guessing
+-- queue up the next random clip right as this one ends instead of guessing.
+-- The station is tracked per itemID so it can be cut off immediately (see
+-- "ixRadioSetStop" below) instead of just letting the current clip play out
+-- on its own after the radio's turned off or picked up.
+local radioSetStations = {}
+
 netstream.Hook("ixRadioSetPlay", function(itemID, soundPath)
+	if (IsValid(radioSetStations[itemID])) then
+		radioSetStations[itemID]:Stop()
+		radioSetStations[itemID] = nil
+	end
+
 	sound.PlayFile("sound/"..soundPath, "noplay", function(station, errorID, errorName)
 		if (!IsValid(station)) then
 			return
 		end
 
 		station:Play()
+		radioSetStations[itemID] = station
 		netstream.Start("ixRadioSetReportLength", itemID, station:GetLength())
 	end)
+end)
+
+netstream.Hook("ixRadioSetStop", function(itemID)
+	if (IsValid(radioSetStations[itemID])) then
+		radioSetStations[itemID]:Stop()
+	end
+
+	radioSetStations[itemID] = nil
 end)
 
 netstream.Hook("Frequency", function(oldFrequency)
