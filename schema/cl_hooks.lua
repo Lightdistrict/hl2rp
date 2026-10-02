@@ -323,6 +323,20 @@ netstream.Hook("PlaySound", function(soundPath)
 	end)
 end)
 
+-- same as "PlaySound" above, but also reports the clip's real length back
+-- to the server so the Radio Set item (schema/items/sh_radioset.lua) can
+-- queue up the next random clip right as this one ends instead of guessing
+netstream.Hook("ixRadioSetPlay", function(itemID, soundPath)
+	sound.PlayFile("sound/"..soundPath, "noplay", function(station, errorID, errorName)
+		if (!IsValid(station)) then
+			return
+		end
+
+		station:Play()
+		netstream.Start("ixRadioSetReportLength", itemID, station:GetLength())
+	end)
+end)
+
 netstream.Hook("Frequency", function(oldFrequency)
 	Derma_StringRequest("Frequency", "What would you like to set the frequency to?", oldFrequency, function(text)
 		ix.command.Send("SetFreq", text)
