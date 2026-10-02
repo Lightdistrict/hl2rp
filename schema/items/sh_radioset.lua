@@ -1,6 +1,6 @@
 
 ITEM.name = "Radio Set"
-ITEM.description = "A large standing radio set. Tap E on it to turn it on or off - hold E to pick it up instead."
+ITEM.description = "A large standing radio set. Tap E on it for the option to turn it on or off - hold E to pick it up instead."
 ITEM.model = Model("models/alyxintprops/radioset_1_0.mdl")
 ITEM.category = "Misc"
 ITEM.width = 2
@@ -91,6 +91,10 @@ end
 local function StartBreenLoop(entity, itemTable)
 	local itemID = itemTable:GetID()
 
+	if (activeLoops[itemID]) then
+		return
+	end
+
 	activeLoops[itemID] = {entity = entity}
 
 	PlayNextBreenClip(itemID)
@@ -128,50 +132,45 @@ local function ToggleRadioSet(entity, caller)
 	end
 end
 
--- the stock ix_item pickup (ENT:Use in Helix core) is driven by holding E
--- for ix.config.Get("itemPickupTime", 0.5) seconds - the engine calls
--- Use() every tick the key is held, so a press still generating Use()
--- calls once that time elapses is a hold (let the stock pickup above
--- finish); anything shorter means E was tapped and released early -
--- treat that as the on/off toggle instead
-function ITEM:OnEntityCreated(entity)
-	-- OnEntityCreated can fire more than once for the same entity - without
-	-- this guard, each extra firing would capture our OWN previous wrapper
-	-- as "baseUse" and wrap it again, nesting deeper every time until
-	-- Use() unwound through all those layers and overflowed the stack
-	if (!entity.ixRadioBaseUse) then
-		entity.ixRadioBaseUse = entity.Use
+-- tapping E on a dropped item (releasing +use before the hold-to-pick-up
+-- duration elapses) is already handled by stock Helix - it opens a small
+-- menu of the item's own functions (anything other than take/combine).
+-- Gating these on IsValid(item.entity) means they only ever show up in
+-- that ground menu, never in the normal inventory right-click menu, since
+-- there's nothing to toggle on/off while it's just sitting in a bag.
+--
+-- (an earlier version of this item tried to tell a tap and a hold apart
+-- itself by overriding the entity's Use() directly - that turned out to be
+-- unreliable in practice and broke both the toggle and the stock pickup,
+-- so this sticks to the same mechanism the working Combine Radio item
+-- already uses for its own Turn On/Turn Off)
+ITEM.functions.TurnOn = {
+	name = "Turn On",
+	OnCanRun = function(item)
+		return IsValid(item.entity) and !item:GetData("enabled", false)
+	end,
+	OnRun = function(item)
+		ToggleRadioSet(item.entity, item.player)
 
-		function entity:Use(activator, caller)
-			local pickupTime = ix.config.Get("itemPickupTime", 0.5)
-
-			if (!self.ixRadioUseStart) then
-				self.ixRadioUseStart = CurTime()
-				self.ixRadioUseCaller = caller
-
-				timer.Simple(pickupTime, function()
-					if (!IsValid(self) or !self.ixRadioUseStart) then
-						return
-					end
-
-					local heldRecently = (CurTime() - (self.ixRadioLastUse or 0)) < 0.15
-
-					self.ixRadioUseStart = nil
-
-					if (!heldRecently and IsValid(self.ixRadioUseCaller)) then
-						ToggleRadioSet(self, self.ixRadioUseCaller)
-					end
-				end)
-			end
-
-			self.ixRadioLastUse = CurTime()
-
-			return self.ixRadioBaseUse(self, activator, caller)
-		end
+		return false
 	end
+}
 
-	-- covers a radio restored still "on" after a server restart, same
-	-- class of bug as the gas mask not resuming its breathing loop on load
+ITEM.functions.TurnOff = {
+	name = "Turn Off",
+	OnCanRun = function(item)
+		return IsValid(item.entity) and item:GetData("enabled", false) == true
+	end,
+	OnRun = function(item)
+		ToggleRadioSet(item.entity, item.player)
+
+		return false
+	end
+}
+
+-- covers a radio restored still "on" after a server restart, same class
+-- of bug as the gas mask not resuming its breathing loop on load
+function ITEM:OnEntityCreated(entity)
 	if (self:GetData("enabled", false)) then
 		StartBreenLoop(entity, self)
 	end
