@@ -331,14 +331,32 @@ end)
 -- on its own after the radio's turned off or picked up.
 local radioSetStations = {}
 
+-- sound.PlayFile loads asynchronously - if "ixRadioSetStop" arrives while a
+-- clip is still loading (e.g. the radio's picked up right after a clip
+-- starts), there's no station yet for it to stop, and the clip would then
+-- start playing moments later with nothing left to ever stop it. Bumping
+-- this counter on every play/stop lets an in-flight load notice it's been
+-- superseded and discard itself instead of actually playing.
+local radioSetGeneration = {}
+
 netstream.Hook("ixRadioSetPlay", function(itemID, soundPath)
 	if (IsValid(radioSetStations[itemID])) then
 		radioSetStations[itemID]:Stop()
 		radioSetStations[itemID] = nil
 	end
 
+	radioSetGeneration[itemID] = (radioSetGeneration[itemID] or 0) + 1
+
+	local generation = radioSetGeneration[itemID]
+
 	sound.PlayFile("sound/"..soundPath, "noplay", function(station, errorID, errorName)
 		if (!IsValid(station)) then
+			return
+		end
+
+		if (radioSetGeneration[itemID] != generation) then
+			station:Stop()
+
 			return
 		end
 
@@ -354,6 +372,7 @@ netstream.Hook("ixRadioSetStop", function(itemID)
 	end
 
 	radioSetStations[itemID] = nil
+	radioSetGeneration[itemID] = (radioSetGeneration[itemID] or 0) + 1
 end)
 
 netstream.Hook("Frequency", function(oldFrequency)
