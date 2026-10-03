@@ -39,15 +39,7 @@ end
 local function PlayNextBreenClip(itemID)
 	local state = activeLoops[itemID]
 
-	if (!state or !IsValid(state.entity)) then
-		activeLoops[itemID] = nil
-
-		return
-	end
-
-	local itemTable = state.entity:GetItemTable()
-
-	if (!itemTable or !itemTable:GetData("enabled", false)) then
+	if (!state or !IsValid(state.entity) or !state.item:GetData("enabled", false)) then
 		activeLoops[itemID] = nil
 
 		return
@@ -88,14 +80,14 @@ function Schema:HandleRadioSetReportLength(client, itemID, length)
 	end)
 end
 
-local function StartBreenLoop(entity, itemTable)
+local function StartBreenLoop(itemTable)
 	local itemID = itemTable:GetID()
 
 	if (activeLoops[itemID]) then
 		return
 	end
 
-	activeLoops[itemID] = {entity = entity}
+	activeLoops[itemID] = {entity = itemTable.entity, item = itemTable}
 
 	PlayNextBreenClip(itemID)
 end
@@ -114,23 +106,22 @@ local function StopBreenLoop(itemTable)
 	-- on its own otherwise, so explicitly tell them to cut it off too
 	if (state and IsValid(state.entity)) then
 		local range = ix.config.Get("chatRange", 280)
-		local recipients = NearbyPlayers(state.entity:GetPos(), range)
 
-		print("[RADIOSET DEBUG] StopBreenLoop itemID="..itemID.." sending stop to "..#recipients.." nearby players")
-		netstream.Start(recipients, "ixRadioSetStop", itemID)
+		netstream.Start(NearbyPlayers(state.entity:GetPos(), range), "ixRadioSetStop", itemID)
 	else
-		print("[RADIOSET DEBUG] StopBreenLoop itemID="..itemID.." entity gone, broadcasting stop to everyone")
 		netstream.Start(player.GetAll(), "ixRadioSetStop", itemID)
 	end
 end
 
-local function ToggleRadioSet(entity, caller)
-	local itemTable = entity:GetItemTable()
-
-	if (!itemTable) then
-		return
-	end
-
+-- itemTable must be the REAL, live item instance (e.g. what the dispatcher
+-- hands OnRun/postHooks as "item") - entity:GetItemTable() looks tempting
+-- but actually returns ix.item.list[...], the STATIC item class definition
+-- shared by every Radio Set in the game (used for things like icons), not
+-- this specific dropped instance. Calling :GetID() on that always reads 0,
+-- which silently filed the breen loop under the wrong activeLoops key and
+-- is why turning it off/picking it up couldn't find the loop to stop.
+local function ToggleRadioSet(itemTable, caller)
+	local entity = itemTable.entity
 	local enabled = !itemTable:GetData("enabled", false)
 
 	itemTable:SetData("enabled", enabled)
@@ -148,7 +139,7 @@ local function ToggleRadioSet(entity, caller)
 
 	if (enabled) then
 		netstream.Start(recipients, "PlaySound", SOUND_ON)
-		StartBreenLoop(entity, itemTable)
+		StartBreenLoop(itemTable)
 	else
 		netstream.Start(recipients, "PlaySound", SOUND_OFF)
 		StopBreenLoop(itemTable)
@@ -173,7 +164,7 @@ ITEM.functions.TurnOn = {
 		return IsValid(item.entity) and !item.entity:GetNWBool("ixRadioEnabled", false)
 	end,
 	OnRun = function(item)
-		ToggleRadioSet(item.entity, item.player)
+		ToggleRadioSet(item, item.player)
 
 		return false
 	end
@@ -185,7 +176,7 @@ ITEM.functions.TurnOff = {
 		return IsValid(item.entity) and item.entity:GetNWBool("ixRadioEnabled", false) == true
 	end,
 	OnRun = function(item)
-		ToggleRadioSet(item.entity, item.player)
+		ToggleRadioSet(item, item.player)
 
 		return false
 	end
@@ -196,13 +187,12 @@ ITEM.functions.TurnOff = {
 function ITEM:OnEntityCreated(entity)
 	if (self:GetData("enabled", false)) then
 		entity:SetNWBool("ixRadioEnabled", true)
-		StartBreenLoop(entity, self)
+		self.entity = entity
+		StartBreenLoop(self)
 	end
 end
 
 function ITEM.postHooks.take(item, result)
-	print("[RADIOSET DEBUG] postHooks.take fired, result="..tostring(result)..", entity valid="..tostring(IsValid(item.entity)))
-
 	if (result == false) then
 		return
 	end
