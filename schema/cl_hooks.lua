@@ -334,8 +334,13 @@ end)
 -- other MP3 cue in this schema uses) so it actually sounds like it's
 -- coming from the radio - BASS fades it out as the listener moves away and
 -- back in if they return, continuously and with no extra netcode, exactly
--- like a real in-world sound source.
+-- like a real in-world sound source. "ixRadioSetTrack" separately says
+-- WHICH entity the sound is anchored to (the dropped prop, or whoever's
+-- carrying it) - kept apart from which clip is playing so picking the
+-- radio up or dropping it again can retarget the sound immediately without
+-- interrupting whatever's currently playing.
 local radioSetStations = {}
+local radioSetTrackEnt = {}
 
 local RADIO_FADE_MIN = 150
 local RADIO_FADE_MAX = 600
@@ -348,9 +353,47 @@ local RADIO_FADE_MAX = 600
 -- superseded and discard itself instead of actually playing.
 local radioSetGeneration = {}
 
-netstream.Hook("ixRadioSetPlay", function(itemID, soundPath, posX, posY, posZ)
-	local pos = Vector(posX, posY, posZ)
+-- entIndex 0 means "no anchor" (see BroadcastTrack in sh_radioset.lua) -
+-- until the first ixRadioSetTrack arrives (always sent before the first
+-- clip starts) a station just plays from wherever SetPos last left it.
+-- Entity(0) is NOT a safe "nothing" check on its own - index 0 is
+-- worldspawn, a real valid entity sitting at the map origin - so this has
+-- to explicitly skip index 0 rather than relying on IsValid(Entity(0))
+-- happening to be false.
+local function GetTrackEntity(itemID)
+	local entIndex = radioSetTrackEnt[itemID]
 
+	if (!entIndex or entIndex <= 0) then
+		return NULL
+	end
+
+	return Entity(entIndex)
+end
+
+netstream.Hook("ixRadioSetTrack", function(itemID, trackEntIndex)
+	radioSetTrackEnt[itemID] = trackEntIndex
+end)
+
+-- follows each playing station's anchor continuously, every frame, rather
+-- than only updating position once when a clip starts - otherwise carrying
+-- an already-playing radio across a room would leave the sound sitting
+-- back where it started until the next clip finally picked a new position
+hook.Add("Think", "ixhl2rpRadioSetFollow", function()
+	for itemID, station in pairs(radioSetStations) do
+		if (!IsValid(station)) then
+			radioSetStations[itemID] = nil
+			continue
+		end
+
+		local trackEntity = GetTrackEntity(itemID)
+
+		if (IsValid(trackEntity)) then
+			station:SetPos(trackEntity:GetPos())
+		end
+	end
+end)
+
+netstream.Hook("ixRadioSetPlay", function(itemID, soundPath)
 	if (IsValid(radioSetStations[itemID])) then
 		radioSetStations[itemID]:Stop()
 		radioSetStations[itemID] = nil
@@ -371,7 +414,12 @@ netstream.Hook("ixRadioSetPlay", function(itemID, soundPath, posX, posY, posZ)
 			return
 		end
 
-		station:SetPos(pos)
+		local trackEntity = GetTrackEntity(itemID)
+
+		if (IsValid(trackEntity)) then
+			station:SetPos(trackEntity:GetPos())
+		end
+
 		station:Set3DFadeDistance(RADIO_FADE_MIN, RADIO_FADE_MAX)
 		station:Play()
 		radioSetStations[itemID] = station
@@ -385,6 +433,7 @@ netstream.Hook("ixRadioSetStop", function(itemID)
 	end
 
 	radioSetStations[itemID] = nil
+	radioSetTrackEnt[itemID] = nil
 	radioSetGeneration[itemID] = (radioSetGeneration[itemID] or 0) + 1
 end)
 

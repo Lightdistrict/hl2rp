@@ -17,7 +17,11 @@ for i = 1, 13 do
 end
 
 -- keyed by item:GetID() (stable across drop/pickup, unlike entity:EntIndex())
--- so only one loop can ever be running per item instance
+-- so only one loop can ever be running per item instance. "what's playing"
+-- (this table) and "where it's anchored" (ixRadioSetTrack, sent whenever
+-- the item changes hands) are handled separately - that's what lets
+-- picking the radio up or dropping it again retarget the sound live,
+-- without interrupting whatever clip is currently playing.
 local activeLoops = {}
 
 local function NearbyPlayers(pos, range)
@@ -32,27 +36,30 @@ local function NearbyPlayers(pos, range)
 	return recipients
 end
 
--- broadcast to everyone, not just players currently nearby - the clip is
--- played as real 3D positional audio (see cl_hooks.lua), so BASS itself
--- continuously fades it out/back in as each listener's distance to the
--- radio changes, same as a real radio would sound. A nearby-only send-time
--- gate would miss anyone who walks into range after the clip already
--- started, and wouldn't make walking away fade it out either.
+-- entIndex 0 doesn't exist as a real entity (worldspawn is 0 but is never a
+-- valid anchor here), so it's used as "no anchor" instead of -1/nil, which
+-- the thirdparty netstream/pon encoder may not round-trip faithfully
+local function BroadcastTrack(itemID, trackEntity)
+	netstream.Start(player.GetAll(), "ixRadioSetTrack", itemID, IsValid(trackEntity) and trackEntity:EntIndex() or 0)
+end
+
+-- broadcasts to everyone, not just players currently nearby - clips are
+-- played as real 3D positional audio anchored to whatever ixRadioSetTrack
+-- last pointed at (see cl_hooks.lua), so BASS itself continuously
+-- attenuates it based on each listener's live distance to that anchor.
+-- A nearby-only send-time gate would miss anyone who walks into range
+-- after the clip already started, and wouldn't make walking away fade it
+-- out either.
 local function PlayNextBreenClip(itemID)
 	local state = activeLoops[itemID]
 
-	if (!state or !IsValid(state.entity) or !state.item:GetData("enabled", false)) then
+	if (!state or !state.item:GetData("enabled", false)) then
 		activeLoops[itemID] = nil
 
 		return
 	end
 
-	-- sent as plain numbers rather than a Vector - nothing else in this
-	-- schema sends a Vector through netstream/pon, so there's no existing
-	-- proof that type round-trips through it cleanly
-	local pos = state.entity:GetPos()
-
-	netstream.Start(player.GetAll(), "ixRadioSetPlay", itemID, BREEN_SOUNDS[math.random(#BREEN_SOUNDS)], pos.x, pos.y, pos.z)
+	netstream.Start(player.GetAll(), "ixRadioSetPlay", itemID, BREEN_SOUNDS[math.random(#BREEN_SOUNDS)])
 
 	state.reported = false
 
@@ -84,6 +91,9 @@ function Schema:HandleRadioSetReportLength(client, itemID, length)
 	end)
 end
 
+-- itemTable.entity must be valid when this is called (true both at the
+-- moment it's turned on - CanRun requires a dropped entity - and when
+-- resuming after a restart, where OnEntityCreated sets it first)
 local function StartBreenLoop(itemTable)
 	local itemID = itemTable:GetID()
 
@@ -91,9 +101,24 @@ local function StartBreenLoop(itemTable)
 		return
 	end
 
-	activeLoops[itemID] = {entity = itemTable.entity, item = itemTable}
+	activeLoops[itemID] = {item = itemTable}
 
+	BroadcastTrack(itemID, itemTable.entity)
 	PlayNextBreenClip(itemID)
+end
+
+-- moves an ALREADY-playing radio's sound to follow a new anchor (the
+-- player who just picked it up, or the new entity it was just dropped
+-- as) without interrupting whatever clip is currently playing. A no-op if
+-- the radio isn't actually on.
+local function UpdateBreenLoopTarget(itemTable, trackEntity)
+	local itemID = itemTable:GetID()
+
+	if (!activeLoops[itemID]) then
+		return
+	end
+
+	BroadcastTrack(itemID, trackEntity)
 end
 
 local function StopBreenLoop(itemTable)
@@ -181,23 +206,30 @@ ITEM.functions.TurnOff = {
 	end
 }
 
--- covers a radio restored still "on" after a server restart, same class
--- of bug as the gas mask not resuming its breathing loop on load
+-- fires both for a fresh drop (possibly re-anchoring an already-playing
+-- radio to this new entity) and for a radio restored still "on" after a
+-- server restart (same class of bug as the gas mask not resuming its
+-- breathing loop on load)
 function ITEM:OnEntityCreated(entity)
-	if (self:GetData("enabled", false)) then
+	self.entity = entity
+
+	if (activeLoops[self:GetID()]) then
 		entity:SetNWBool("ixRadioEnabled", true)
-		self.entity = entity
+		UpdateBreenLoopTarget(self, entity)
+	elseif (self:GetData("enabled", false)) then
+		entity:SetNWBool("ixRadioEnabled", true)
 		StartBreenLoop(self)
 	end
 end
 
+-- picking it up no longer turns it off - it keeps playing and follows
+-- whoever's carrying it until they turn it off or drop it somewhere else
 function ITEM.postHooks.take(item, result)
 	if (result == false) then
 		return
 	end
 
-	item:SetData("enabled", false)
-	StopBreenLoop(item)
+	UpdateBreenLoopTarget(item, item.player)
 end
 
 function ITEM:OnRemoved()
