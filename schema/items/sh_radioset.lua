@@ -8,7 +8,9 @@ ITEM.height = 2
 
 local SOUND_ON = "music_radio/radio_on.mp3"
 local SOUND_OFF = "music_radio/radio_off.mp3"
-local FALLBACK_CLIP_LENGTH = 15
+-- true last-resort only now (see PlayNextBreenClip) - generous since a
+-- real clip finishing is what normally advances to the next one
+local FALLBACK_CLIP_LENGTH = 90
 
 local BREEN_SOUNDS = {}
 
@@ -46,6 +48,13 @@ end
 -- A nearby-only send-time gate would miss anyone who walks into range
 -- after the clip already started, and wouldn't make walking away fade it
 -- out either.
+--
+-- The next clip is queued when a client reports the current one has
+-- ACTUALLY finished playing (see "ixRadioSetClipFinished" in
+-- cl_hooks.lua/sv_hooks.lua), rather than guessing from the file's
+-- reported length up front - an earlier version did that and clamped the
+-- wait to 120s as a sanity cap, which would cut off anything longer than
+-- that early. Waiting for real playback to end has no such ceiling.
 local function PlayNextBreenClip(itemID)
 	local state = activeLoops[itemID]
 
@@ -59,6 +68,8 @@ local function PlayNextBreenClip(itemID)
 
 	state.reported = false
 
+	-- last-resort only: covers nobody ever being able to report a finish
+	-- (e.g. the one player who turned it on disconnects immediately after)
 	timer.Create("ixhl2rpRadioSetFallback"..itemID, FALLBACK_CLIP_LENGTH, 1, function()
 		if (!activeLoops[itemID] or activeLoops[itemID].reported) then
 			return
@@ -68,11 +79,11 @@ local function PlayNextBreenClip(itemID)
 	end)
 end
 
--- called from schema/sv_hooks.lua's "ixRadioSetReportLength" netstream.Hook -
+-- called from schema/sv_hooks.lua's "ixRadioSetClipFinished" netstream.Hook -
 -- registering that netstream.Hook here directly would run at item-load time
 -- (via ix.item.Register), which happens before the thirdparty netstream lib
 -- is even included, so the hook has to live in sv_hooks.lua instead
-function Schema:HandleRadioSetReportLength(client, itemID, length)
+function Schema:HandleRadioSetClipFinished(client, itemID)
 	local state = activeLoops[itemID]
 
 	if (!state or state.reported) then
@@ -82,9 +93,7 @@ function Schema:HandleRadioSetReportLength(client, itemID, length)
 	state.reported = true
 
 	timer.Remove("ixhl2rpRadioSetFallback"..itemID)
-	timer.Create("ixhl2rpRadioSetNext"..itemID, math.Clamp(length or FALLBACK_CLIP_LENGTH, 1, 120), 1, function()
-		PlayNextBreenClip(itemID)
-	end)
+	PlayNextBreenClip(itemID)
 end
 
 -- itemTable.entity must be valid when this is called (true both at the

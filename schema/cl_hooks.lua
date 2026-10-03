@@ -323,10 +323,11 @@ netstream.Hook("PlaySound", function(soundPath)
 	end)
 end)
 
--- same as "PlaySound" above, but also reports the clip's real length back
--- to the server so the Radio Set item (schema/items/sh_radioset.lua) can
--- queue up the next random clip right as this one ends instead of guessing.
--- The station is tracked per itemID so it can be cut off immediately (see
+-- same as "PlaySound" above, but also reports back to the server (see
+-- "ixRadioSetClipFinished" below) the moment this clip actually finishes
+-- playing, so the Radio Set item (schema/items/sh_radioset.lua) can queue
+-- up the next random clip right on cue instead of guessing how long it
+-- runs. The station is tracked per itemID so it can be cut off immediately (see
 -- "ixRadioSetStop" below) instead of just letting the current clip play out
 -- on its own after the radio's turned off or picked up.
 --
@@ -377,7 +378,11 @@ end)
 -- follows each playing station's anchor continuously, every frame, rather
 -- than only updating position once when a clip starts - otherwise carrying
 -- an already-playing radio across a room would leave the sound sitting
--- back where it started until the next clip finally picked a new position
+-- back where it started until the next clip finally picked a new position.
+-- Also watches for the clip actually finishing (GMOD_CHANNEL_STOPPED) to
+-- report back - more reliable than trusting a file's reported GetLength()
+-- up front, which can be off for some MP3 encodings and would otherwise
+-- cut a clip short or leave dead air before the next one starts.
 hook.Add("Think", "ixhl2rpRadioSetFollow", function()
 	for itemID, station in pairs(radioSetStations) do
 		if (!IsValid(station)) then
@@ -389,6 +394,11 @@ hook.Add("Think", "ixhl2rpRadioSetFollow", function()
 
 		if (IsValid(trackEntity)) then
 			station:SetPos(trackEntity:GetPos())
+		end
+
+		if (station:GetState() == GMOD_CHANNEL_STOPPED) then
+			radioSetStations[itemID] = nil
+			netstream.Start("ixRadioSetClipFinished", itemID)
 		end
 	end
 end)
@@ -423,7 +433,6 @@ netstream.Hook("ixRadioSetPlay", function(itemID, soundPath)
 		station:Set3DFadeDistance(RADIO_FADE_MIN, RADIO_FADE_MAX)
 		station:Play()
 		radioSetStations[itemID] = station
-		netstream.Start("ixRadioSetReportLength", itemID, station:GetLength())
 	end)
 end)
 
