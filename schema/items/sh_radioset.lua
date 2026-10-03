@@ -32,10 +32,12 @@ local function NearbyPlayers(pos, range)
 	return recipients
 end
 
--- the client that actually hears a clip reports its real length back (see
--- "ixRadioSetPlay"/"ixRadioSetReportLength" in cl_hooks.lua/sv_hooks.lua)
--- so the next clip starts right as this one ends - this fallback only
--- covers the case where nobody was in range to report back at all
+-- broadcast to everyone, not just players currently nearby - the clip is
+-- played as real 3D positional audio (see cl_hooks.lua), so BASS itself
+-- continuously fades it out/back in as each listener's distance to the
+-- radio changes, same as a real radio would sound. A nearby-only send-time
+-- gate would miss anyone who walks into range after the clip already
+-- started, and wouldn't make walking away fade it out either.
 local function PlayNextBreenClip(itemID)
 	local state = activeLoops[itemID]
 
@@ -45,10 +47,12 @@ local function PlayNextBreenClip(itemID)
 		return
 	end
 
-	local range = ix.config.Get("chatRange", 280)
-	local recipients = NearbyPlayers(state.entity:GetPos(), range)
+	-- sent as plain numbers rather than a Vector - nothing else in this
+	-- schema sends a Vector through netstream/pon, so there's no existing
+	-- proof that type round-trips through it cleanly
+	local pos = state.entity:GetPos()
 
-	netstream.Start(recipients, "ixRadioSetPlay", itemID, BREEN_SOUNDS[math.random(#BREEN_SOUNDS)])
+	netstream.Start(player.GetAll(), "ixRadioSetPlay", itemID, BREEN_SOUNDS[math.random(#BREEN_SOUNDS)], pos.x, pos.y, pos.z)
 
 	state.reported = false
 
@@ -94,7 +98,6 @@ end
 
 local function StopBreenLoop(itemTable)
 	local itemID = itemTable:GetID()
-	local state = activeLoops[itemID]
 
 	activeLoops[itemID] = nil
 
@@ -102,15 +105,11 @@ local function StopBreenLoop(itemTable)
 	timer.Remove("ixhl2rpRadioSetNext"..itemID)
 
 	-- stopping the loop above only stops scheduling FUTURE clips - the one
-	-- already playing on each nearby client's own audio channel keeps going
-	-- on its own otherwise, so explicitly tell them to cut it off too
-	if (state and IsValid(state.entity)) then
-		local range = ix.config.Get("chatRange", 280)
-
-		netstream.Start(NearbyPlayers(state.entity:GetPos(), range), "ixRadioSetStop", itemID)
-	else
-		netstream.Start(player.GetAll(), "ixRadioSetStop", itemID)
-	end
+	-- already playing on each client's own audio channel keeps going on its
+	-- own otherwise, so explicitly tell everyone to cut it off too (clips
+	-- are broadcast to everyone now - see PlayNextBreenClip above - so the
+	-- stop has to be too, regardless of where the radio currently is)
+	netstream.Start(player.GetAll(), "ixRadioSetStop", itemID)
 end
 
 -- itemTable must be the REAL, live item instance (e.g. what the dispatcher

@@ -329,7 +329,16 @@ end)
 -- The station is tracked per itemID so it can be cut off immediately (see
 -- "ixRadioSetStop" below) instead of just letting the current clip play out
 -- on its own after the radio's turned off or picked up.
+--
+-- Played as real 3D positional audio (not the plain 2D "PlaySound" every
+-- other MP3 cue in this schema uses) so it actually sounds like it's
+-- coming from the radio - BASS fades it out as the listener moves away and
+-- back in if they return, continuously and with no extra netcode, exactly
+-- like a real in-world sound source.
 local radioSetStations = {}
+
+local RADIO_FADE_MIN = 150
+local RADIO_FADE_MAX = 600
 
 -- sound.PlayFile loads asynchronously - if "ixRadioSetStop" arrives while a
 -- clip is still loading (e.g. the radio's picked up right after a clip
@@ -339,7 +348,9 @@ local radioSetStations = {}
 -- superseded and discard itself instead of actually playing.
 local radioSetGeneration = {}
 
-netstream.Hook("ixRadioSetPlay", function(itemID, soundPath)
+netstream.Hook("ixRadioSetPlay", function(itemID, soundPath, posX, posY, posZ)
+	local pos = Vector(posX, posY, posZ)
+
 	if (IsValid(radioSetStations[itemID])) then
 		radioSetStations[itemID]:Stop()
 		radioSetStations[itemID] = nil
@@ -349,7 +360,7 @@ netstream.Hook("ixRadioSetPlay", function(itemID, soundPath)
 
 	local generation = radioSetGeneration[itemID]
 
-	sound.PlayFile("sound/"..soundPath, "noplay", function(station, errorID, errorName)
+	sound.PlayFile("sound/"..soundPath, "3d mono noplay", function(station, errorID, errorName)
 		if (!IsValid(station)) then
 			return
 		end
@@ -360,6 +371,8 @@ netstream.Hook("ixRadioSetPlay", function(itemID, soundPath)
 			return
 		end
 
+		station:SetPos(pos)
+		station:Set3DFadeDistance(RADIO_FADE_MIN, RADIO_FADE_MAX)
 		station:Play()
 		radioSetStations[itemID] = station
 		netstream.Start("ixRadioSetReportLength", itemID, station:GetLength())
