@@ -17,11 +17,7 @@ for i = 1, 13 do
 end
 
 -- keyed by item:GetID() (stable across drop/pickup, unlike entity:EntIndex())
--- so only one loop can ever be running per item instance. "what's playing"
--- (this table) and "where it's anchored" (ixRadioSetTrack, sent whenever
--- the item changes hands) are handled separately - that's what lets
--- picking the radio up or dropping it again retarget the sound live,
--- without interrupting whatever clip is currently playing.
+-- so only one loop can ever be running per item instance
 local activeLoops = {}
 
 local function NearbyPlayers(pos, range)
@@ -105,20 +101,6 @@ local function StartBreenLoop(itemTable)
 
 	BroadcastTrack(itemID, itemTable.entity)
 	PlayNextBreenClip(itemID)
-end
-
--- moves an ALREADY-playing radio's sound to follow a new anchor (the
--- player who just picked it up, or the new entity it was just dropped
--- as) without interrupting whatever clip is currently playing. A no-op if
--- the radio isn't actually on.
-local function UpdateBreenLoopTarget(itemTable, trackEntity)
-	local itemID = itemTable:GetID()
-
-	if (!activeLoops[itemID]) then
-		return
-	end
-
-	BroadcastTrack(itemID, trackEntity)
 end
 
 local function StopBreenLoop(itemTable)
@@ -206,30 +188,29 @@ ITEM.functions.TurnOff = {
 	end
 }
 
--- fires both for a fresh drop (possibly re-anchoring an already-playing
--- radio to this new entity) and for a radio restored still "on" after a
--- server restart (same class of bug as the gas mask not resuming its
--- breathing loop on load)
+-- covers both a fresh drop of a radio that was switched on before being
+-- picked up (silenced on pickup below, but still "on" - this is what makes
+-- it start right back up the moment it's set back down) and one restored
+-- still "on" after a server restart (same class of bug as the gas mask not
+-- resuming its breathing loop on load)
 function ITEM:OnEntityCreated(entity)
 	self.entity = entity
 
-	if (activeLoops[self:GetID()]) then
-		entity:SetNWBool("ixRadioEnabled", true)
-		UpdateBreenLoopTarget(self, entity)
-	elseif (self:GetData("enabled", false)) then
+	if (self:GetData("enabled", false)) then
 		entity:SetNWBool("ixRadioEnabled", true)
 		StartBreenLoop(self)
 	end
 end
 
--- picking it up no longer turns it off - it keeps playing and follows
--- whoever's carrying it until they turn it off or drop it somewhere else
+-- tucked away in an inventory it should go quiet, like it's muffled in a
+-- bag or pocket - but it's still switched on (enabled isn't touched here),
+-- so OnEntityCreated starts it right back up the moment it's dropped again
 function ITEM.postHooks.take(item, result)
 	if (result == false) then
 		return
 	end
 
-	UpdateBreenLoopTarget(item, item.player)
+	StopBreenLoop(item)
 end
 
 function ITEM:OnRemoved()
